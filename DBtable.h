@@ -21,20 +21,20 @@
   `tradedatetime_ctp` datetime DEFAULT NULL COMMENT 'ctp返回交易时间',
  */
 sql_create_15(ctp_trade_record,
-    1, 15 ,// The meaning of these values is covered in the user manua
-    mysqlpp::sql_char,tradeid,
-    mysqlpp::sql_char, instrumentid,
-    mysqlpp::sql_char, instrumentid_ch,
-    mysqlpp::sql_char, variety_ch,
-    mysqlpp::sql_decimal, price,
-    mysqlpp::sql_bigint, volume,
-    mysqlpp::sql_char, direction,
-    mysqlpp::sql_char, offsetflag,
-    mysqlpp::sql_char, brokerid,
-    mysqlpp::sql_char, exchangeid,
-    mysqlpp::sql_char, investorid,
-    mysqlpp::sql_char, tradetype,
-    mysqlpp::sql_datetime, tradedatetime,
-    mysqlpp::sql_datetime, tradedatetime_ctp,
-    mysqlpp::sql_char, feedback)
+              1, 15 ,// The meaning of these values is covered in the user manua
+              mysqlpp::sql_char,tradeid,
+              mysqlpp::sql_char, instrumentid,
+              mysqlpp::sql_char, instrumentid_ch,
+              mysqlpp::sql_char, variety_ch,
+              mysqlpp::sql_decimal, price,
+              mysqlpp::sql_bigint, volume,
+              mysqlpp::sql_char, direction,
+              mysqlpp::sql_char, offsetflag,
+              mysqlpp::sql_char, brokerid,
+              mysqlpp::sql_char, exchangeid,
+              mysqlpp::sql_char, investorid,
+              mysqlpp::sql_char, tradetype,
+              mysqlpp::sql_datetime, tradedatetime,
+              mysqlpp::sql_datetime, tradedatetime_ctp,
+              mysqlpp::sql_char, feedback)
 #endif // DBTABLE_H

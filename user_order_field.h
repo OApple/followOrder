@@ -46,7 +46,7 @@ private:
     char _status='z';
     char _direction;
     unsigned int _tick;
-     string _investorID="";
+    string _investorID="";
     int _frontID;
     int _sessionID;
     unsigned int _order_ref;

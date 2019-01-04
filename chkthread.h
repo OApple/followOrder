@@ -35,7 +35,7 @@ class ChkThread
 {
 private:
     unordered_map<string, UserOrderField*> NorderMap;
-       unordered_map<string, UserOrderField*> ForderMap;
+    unordered_map<string, UserOrderField*> ForderMap;
     std::mutex mtx;
     std::thread chkThread;
     ChkThread(){}

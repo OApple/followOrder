@@ -100,7 +100,7 @@ public:
 
 
     string password="";
-//    string hedgeFlag="1";
+    //    string hedgeFlag="1";
     string _trade_front_addr="0";
     CThostFtdcTraderApi* pUserApi ;
 
@@ -145,11 +145,11 @@ protected:
 
     bool _positon_req_send=false;
     bool isTradeDefFieldReady = false;
-  SQLite::Database *sqlite_handle;
+    SQLite::Database *sqlite_handle;
 
 private:
 
-      string  _investorID="";
+    string  _investorID="";
 
     int _total_trade_num;
 
@@ -157,9 +157,9 @@ private:
     int _close_num;
 
     double _profit;
-   double _loss;
+    double _loss;
 
-   int _loss_num;
+    int _loss_num;
 
 
     ///用户登录请求

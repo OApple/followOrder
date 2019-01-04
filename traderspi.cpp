@@ -41,32 +41,32 @@ CTraderSpi::CTraderSpi(DataInitInstance &di, string investorID):dii(di)
     pUserApi->RegisterFront((char*)(_trade_front_addr.c_str()));
     _pUserApi=pUserApi;
 
-//    sqlite_handle=new SQLite::Database(":memory:", SQLite::OPEN_READWRITE);
+    //    sqlite_handle=new SQLite::Database(":memory:", SQLite::OPEN_READWRITE);
 
 
-//    string TransactionRecordSql=
-//            string("CREATE TABLE TransactionRecord(")  +
-//            "Date                 TEXT     NOT NULL," +
-//            "Exchange         TEXT    NOT NULL," +
-//            "Product            TEXT     NOT NULL," +
-//            "Instrument       TEXT      NOT NULL," +
-//            "BS                    TEXT        NOT NULL," +
-//            "Price               DOUBLE     NOT NULL," +
-//            "Lots                INT         NOT NULL," +
-//            "Turnover           DOUBLE     NOT NULL," +
-//            "OC                TEXT              NOT NULL," +
-//            "Fee              DOUBLE        NOT NULL," +
-//            "RealizedPL        DOUBLE       NOT NULL," +
-//            "Trans_No        INT               NOT NULL );";
-//    sqlite_handle->exec(TransactionRecordSql);
-//    if(SQLite::OK!=sqlite_handle->getErrorCode())
-//    {
-//        cout<<sqlite_handle->getErrorMsg()<<endl;
-//    }
-//    else
-//    {
-//        cout<<"sqlite inti successfule"<<endl;
-//    }
+    //    string TransactionRecordSql=
+    //            string("CREATE TABLE TransactionRecord(")  +
+    //            "Date                 TEXT     NOT NULL," +
+    //            "Exchange         TEXT    NOT NULL," +
+    //            "Product            TEXT     NOT NULL," +
+    //            "Instrument       TEXT      NOT NULL," +
+    //            "BS                    TEXT        NOT NULL," +
+    //            "Price               DOUBLE     NOT NULL," +
+    //            "Lots                INT         NOT NULL," +
+    //            "Turnover           DOUBLE     NOT NULL," +
+    //            "OC                TEXT              NOT NULL," +
+    //            "Fee              DOUBLE        NOT NULL," +
+    //            "RealizedPL        DOUBLE       NOT NULL," +
+    //            "Trans_No        INT               NOT NULL );";
+    //    sqlite_handle->exec(TransactionRecordSql);
+    //    if(SQLite::OK!=sqlite_handle->getErrorCode())
+    //    {
+    //        cout<<sqlite_handle->getErrorMsg()<<endl;
+    //    }
+    //    else
+    //    {
+    //        cout<<"sqlite inti successfule"<<endl;
+    //    }
 }
 
 CTraderSpi::CTraderSpi( DataInitInstance &di,
@@ -167,7 +167,7 @@ void CTraderSpi::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,CThos
 
         boost::this_thread::sleep(boost::posix_time::seconds(1));
         ReqQrySettlementInfo();
-//        ReqQrySettlementInfoConfirm();
+        //        ReqQrySettlementInfoConfirm();
     }
     else
     {
@@ -286,7 +286,7 @@ void CTraderSpi::ReqQryTradingAccount(){
 void CTraderSpi::OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTradingAccount, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 
-//    LOG(INFO) << lexical_cast<string>(this)<<"-------->>>OnRspQryTradingAccount:查询投资者账户信息:"<<pTradingAccount->AccountID<<endl;
+    //    LOG(INFO) << lexical_cast<string>(this)<<"-------->>>OnRspQryTradingAccount:查询投资者账户信息:"<<pTradingAccount->AccountID<<endl;
     string str;
     if (bIsLast && !IsErrorRspInfo(pRspInfo)&&pTradingAccount )
     {
@@ -319,19 +319,19 @@ void CTraderSpi::ReqQryInvestorPosition()
     try
     {
         query.execute(delSql);
-         query.execute("commit");
+        query.execute("commit");
     }
     catch(const mysqlpp::BadQuery& er)
     {
         LOG(INFO) << lexical_cast<string>(this) << "exec error: " << er.what() << endl;
-         query.execute("commit");
+        query.execute("commit");
         LOG(ERROR)<<delSql;
         return ;
     }
-//  catch(const mysqlpp::ConnectionFailed& er)
-//    {
+    //  catch(const mysqlpp::ConnectionFailed& er)
+    //    {
 
-//    }
+    //    }
     CThostFtdcQryInvestorPositionField req;
     memset(&req, 0, sizeof(req));
     strcpy(req.BrokerID, _brokerID.c_str());
@@ -468,33 +468,33 @@ void CTraderSpi::SaveTransactionRecord()
             try
             {
                 query.execute(sql);
-                 query.execute("commit");
+                query.execute("commit");
             }
             catch (const mysqlpp::Exception& er)
             {
                 LOG(ERROR)  << "exec error: " << er.what() <<"  "<<sql<< endl;
-                 query.execute("commit");
-               // return ;
+                query.execute("commit");
+                // return ;
             }
-//            sqlite_handle->exec(sql);
+            //            sqlite_handle->exec(sql);
         }
-//        _total_trade_num = sqlite_handle->execAndGet("select sum(Lots) from  TransactionRecord;");
-//        LOG(INFO)<< "total_trade_num=" << _total_trade_num;
+        //        _total_trade_num = sqlite_handle->execAndGet("select sum(Lots) from  TransactionRecord;");
+        //        LOG(INFO)<< "total_trade_num=" << _total_trade_num;
 
-//        _profit_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where RealizedPL>0;");
-//        LOG(INFO)<< "yinglibi shu=" << _profit_num ;
+        //        _profit_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where RealizedPL>0;");
+        //        LOG(INFO)<< "yinglibi shu=" << _profit_num ;
 
-//        _close_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where OC not in ('开');");
-//        LOG(INFO) << "close all=" << _close_num ;
+        //        _close_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where OC not in ('开');");
+        //        LOG(INFO) << "close all=" << _close_num ;
 
-//        _profit= sqlite_handle->execAndGet("select sum(RealizedPL) from TransactionRecord where RealizedPL>0;");
-//        LOG(INFO)<< "profit=" << _profit ;
+        //        _profit= sqlite_handle->execAndGet("select sum(RealizedPL) from TransactionRecord where RealizedPL>0;");
+        //        LOG(INFO)<< "profit=" << _profit ;
 
-//        _loss = sqlite_handle->execAndGet("select sum(RealizedPL) from TransactionRecord where RealizedPL<0;");
-//        LOG(INFO)<< "loss=" << _loss;
+        //        _loss = sqlite_handle->execAndGet("select sum(RealizedPL) from TransactionRecord where RealizedPL<0;");
+        //        LOG(INFO)<< "loss=" << _loss;
 
-//        _loss_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where RealizedPL<0;");
-//        LOG(INFO)<< "loss count=" << _loss_num ;
+        //        _loss_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where RealizedPL<0;");
+        //        LOG(INFO)<< "loss count=" << _loss_num ;
     }
 }
 
@@ -880,8 +880,8 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 
     LOG(INFO) << (lexical_cast<string>(this)+"--->>>OnRtnOrder:" + tmpstr);
 
-//    if(!IsMyOrder(pOrder))
-//        return;
+    //    if(!IsMyOrder(pOrder))
+    //        return;
 
     if(pOrder->OrderStatus == '0')
     {
@@ -897,7 +897,7 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
     if(pOrder->OrderStatus == '1')
     {
         ChkThread*ct=  ChkThread::GetInstance();
-         string key=GetKey2(pOrder);
+        string key=GetKey2(pOrder);
         UserOrderField*userOrderField =  ct->get_Fuser_order(key);
         if(userOrderField!=NULL)
             userOrderField->SetStatus('1');
@@ -907,7 +907,7 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
     if(pOrder->OrderStatus == '2')
     {
         ChkThread*ct=  ChkThread::GetInstance();
-       string key=GetKey2(pOrder);
+        string key=GetKey2(pOrder);
         UserOrderField*userOrderField =  ct->get_Fuser_order(key);
         if(userOrderField!=NULL)
             userOrderField->SetStatus('2');
@@ -918,7 +918,7 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
     {
         ChkThread*ct=  ChkThread::GetInstance();
         string key=GetKey2(pOrder);
-//        UserOrderField*userOrderField =  ct->get_Fuser_order(key);
+        //        UserOrderField*userOrderField =  ct->get_Fuser_order(key);
         //        if(userOrderField!=NULL)
         //            userOrderField->status='3';
     }
@@ -976,7 +976,7 @@ void CTraderSpi::OnRtnTrade(CThostFtdcTradeField *pTrade)
     //       cerr << "------->>>>OnRtnTrade InvestorID=" << pTrade->InvestorID<< endl;
     // boost::recursive_mutex::scoped_lock SLock(_spi_mtx);
     string tmpstr = strTradeField(pTrade);
-     LOG(INFO) << (lexical_cast<string>(this)+"--->>>OnRtnTrade:" + tmpstr);
+    LOG(INFO) << (lexical_cast<string>(this)+"--->>>OnRtnTrade:" + tmpstr);
     dii.saveThostFtdcTradeFieldToDb(pTrade);
 
     //todo modify account

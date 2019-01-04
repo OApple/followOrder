@@ -90,7 +90,7 @@ private:
     bool _all_follow_ok=false;
     bool _positon_req_send=false;
     bool _loginOK;
-vector<CTraderSpi *> _follow;
+    vector<CTraderSpi *> _follow;
 
     string _brokerID;
     string  _investorID="";
@@ -99,7 +99,7 @@ vector<CTraderSpi *> _follow;
     int _frontID;
     int _sessionID;
     int _orderRef;
-  string _settlemsg;
+    string _settlemsg;
     DataInitInstance &dii;
     SQLite::Database *sqlite_handle;
     int _total_trade_num;
@@ -108,9 +108,9 @@ vector<CTraderSpi *> _follow;
     int _close_num;
 
     double _profit;
-   double _loss;
+    double _loss;
 
-   int _loss_num;
+    int _loss_num;
 
     ///用户登录请求
     void ReqUserLogin();

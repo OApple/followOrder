@@ -77,16 +77,16 @@ public:
             LOG(ERROR)  << "wait use:" << conns_in_use_<<"max:"<<m_max_size<<std::endl;
             sleep(1);
         }
-          mysqlpp::Connection*pc;
-           pc=mysqlpp::ConnectionPool::safe_grab();
-//        LOG(ERROR)  << "grab:" <<pc<< std::endl;
+        mysqlpp::Connection*pc;
+        pc=mysqlpp::ConnectionPool::safe_grab();
+        //        LOG(ERROR)  << "grab:" <<pc<< std::endl;
         ++conns_in_use_;
         return pc;
     }
     void release(const mysqlpp::Connection* pc)
     {
         --conns_in_use_;
-//        LOG(ERROR) << " release:" <<pc <<std::endl;
+        //        LOG(ERROR) << " release:" <<pc <<std::endl;
         mysqlpp::ConnectionPool::release(pc);
     }
 

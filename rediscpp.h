@@ -54,8 +54,8 @@ public:
         //        std::string str = this->_reply->str;
         else
         {
-        freeReplyObject(this->_reply);
-        return false;
+            freeReplyObject(this->_reply);
+            return false;
         }
     }
     std::string get(std::string key)

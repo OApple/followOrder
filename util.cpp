@@ -8,11 +8,11 @@ string strRspInfoField(CThostFtdcRspInfoField *pRspInfo)
     if(pRspInfo==NULL)
         return ( tmp);
     bool bResult = ((pRspInfo) && (pRspInfo->ErrorID != 0));
-      string tmpstr;
+    string tmpstr;
     if (bResult){
-       tmpstr =
-       "错误代码 ErrorID="+ lexical_cast<string>(pRspInfo->ErrorID)+
-        "\n 错误信息 ErrorMsg="+between(string(pRspInfo->ErrorMsg),"UTF-8","GBK");
+        tmpstr =
+                "错误代码 ErrorID="+ lexical_cast<string>(pRspInfo->ErrorID)+
+                "\n 错误信息 ErrorMsg="+between(string(pRspInfo->ErrorMsg),"UTF-8","GBK");
 
     }
     return tmpstr;
@@ -72,39 +72,39 @@ string strOrderActionField(CThostFtdcOrderActionField *pOrderAction)
     string tmp;
     if(pOrderAction==NULL)
         return ( tmp);
-string  action=
-        "经纪公司代码 BrokerID="+lexical_cast<string>(pOrderAction->BrokerID)+
-        "\n 投资者代码 InvestorID="+pOrderAction->InvestorID+
-        "\n 报单操作引用 OrderActionRef="+lexical_cast<string>(pOrderAction->OrderActionRef)+
-        "\n 报单引用 OrderRef="+(pOrderAction->OrderRef)+
-        "\n 请求编号 RequestID="+lexical_cast<string>(pOrderAction->RequestID)+
-        "\n 前置编号 FrontID="+lexical_cast<string>(pOrderAction->FrontID)+
+    string  action=
+            "经纪公司代码 BrokerID="+lexical_cast<string>(pOrderAction->BrokerID)+
+            "\n 投资者代码 InvestorID="+pOrderAction->InvestorID+
+            "\n 报单操作引用 OrderActionRef="+lexical_cast<string>(pOrderAction->OrderActionRef)+
+            "\n 报单引用 OrderRef="+(pOrderAction->OrderRef)+
+            "\n 请求编号 RequestID="+lexical_cast<string>(pOrderAction->RequestID)+
+            "\n 前置编号 FrontID="+lexical_cast<string>(pOrderAction->FrontID)+
 
-        "\n 会话编号 SessionID="+lexical_cast<string>(pOrderAction->SessionID)+
-        "\n 交易所代码 ExchangeID="+(pOrderAction->ExchangeID)+
-        "\n 报单编号 InvestorID="+(pOrderAction->OrderSysID)+
-        "\n 操作标志 ActionFlag="+(pOrderAction->ActionFlag)+
-        "\n 价格 LimitPrice="+lexical_cast<string>(pOrderAction->LimitPrice)+
+            "\n 会话编号 SessionID="+lexical_cast<string>(pOrderAction->SessionID)+
+            "\n 交易所代码 ExchangeID="+(pOrderAction->ExchangeID)+
+            "\n 报单编号 InvestorID="+(pOrderAction->OrderSysID)+
+            "\n 操作标志 ActionFlag="+(pOrderAction->ActionFlag)+
+            "\n 价格 LimitPrice="+lexical_cast<string>(pOrderAction->LimitPrice)+
 
-        "\n 数量变化 VolumeChange="+lexical_cast<string>(pOrderAction->VolumeChange)+
-        "\n 操作日期 ActionDate="+(pOrderAction->ActionDate)+
-        "\n 操作时间 ActionTime="+(pOrderAction->ActionTime)+
-        "\n 交易所交易员代码 TraderID="+(pOrderAction->TraderID)+
-        "\n 安装编号 InstallID="+lexical_cast<string>(pOrderAction->InstallID)+
+            "\n 数量变化 VolumeChange="+lexical_cast<string>(pOrderAction->VolumeChange)+
+            "\n 操作日期 ActionDate="+(pOrderAction->ActionDate)+
+            "\n 操作时间 ActionTime="+(pOrderAction->ActionTime)+
+            "\n 交易所交易员代码 TraderID="+(pOrderAction->TraderID)+
+            "\n 安装编号 InstallID="+lexical_cast<string>(pOrderAction->InstallID)+
 
-        "\n 本地报单编号 OrderLocalID="+(pOrderAction->OrderLocalID)+
-        "\n 操作本地编号 ActionLocalID="+(pOrderAction->ActionLocalID)+
-        "\n 会员代码 ParticipantID="+(pOrderAction->ParticipantID)+
-        "\n 客户代码 ClientID="+(pOrderAction->ClientID)+
-        "\n 业务单元 BusinessUnit="+(pOrderAction->BusinessUnit)+
+            "\n 本地报单编号 OrderLocalID="+(pOrderAction->OrderLocalID)+
+            "\n 操作本地编号 ActionLocalID="+(pOrderAction->ActionLocalID)+
+            "\n 会员代码 ParticipantID="+(pOrderAction->ParticipantID)+
+            "\n 客户代码 ClientID="+(pOrderAction->ClientID)+
+            "\n 业务单元 BusinessUnit="+(pOrderAction->BusinessUnit)+
 
-        "\n 报单操作状态 OrderActionStatus="+(pOrderAction->OrderActionStatus)+
-        "\n 用户代码 UserID="+(pOrderAction->UserID)+
-        "\n 状态信息 StatusMsg="+between(string(pOrderAction->StatusMsg),"UTF-8","GBK")+
-        "\n 合约代码 InstrumentID="+(pOrderAction->InstrumentID);
+            "\n 报单操作状态 OrderActionStatus="+(pOrderAction->OrderActionStatus)+
+            "\n 用户代码 UserID="+(pOrderAction->UserID)+
+            "\n 状态信息 StatusMsg="+between(string(pOrderAction->StatusMsg),"UTF-8","GBK")+
+            "\n 合约代码 InstrumentID="+(pOrderAction->InstrumentID);
 
 
-  return action;
+    return action;
 }
 
 
@@ -366,7 +366,7 @@ string strTradeField(CThostFtdcTradeField *order)
             "\n 结算编号 SettlementID="+lexical_cast<string>(order->SettlementID)+
             "\n 经纪公司报单编号 BrokerOrderSeq="+lexical_cast<string>(order->BrokerOrderSeq)+
             "\n 成交来源 TradeSource="+order->TradeSource;
-//    cout << orderInfo <<endl;
+    //    cout << orderInfo <<endl;
     return orderInfo;
 }
 

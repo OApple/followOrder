@@ -3,6 +3,9 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 TARGET = followOrder
+QMAKE_CXXFLAGS += -Wno-unused-parameter
+
+QMAKE_CXXFLAGS += -Wno-unused-variable
 
 SOURCES += main.cpp \
     util.cpp \

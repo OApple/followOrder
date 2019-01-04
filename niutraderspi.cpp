@@ -42,34 +42,34 @@ NiuTraderSpi::NiuTraderSpi(DataInitInstance&di, string investorID, string passWo
     pUserApi->RegisterFront((char*)(_trade_front_addr.c_str()));
     _pUserApi=pUserApi;
 
-//    std::cout << "SQlite3 version " << SQLite::VERSION << " (" << SQLite::getLibVersion() << ")" << std::endl;
-//    std::cout << "SQliteC++ version " << SQLITECPP_VERSION << std::endl;
-//    sqlite_handle=new SQLite::Database(":memory:", SQLite::OPEN_READWRITE);
+    //    std::cout << "SQlite3 version " << SQLite::VERSION << " (" << SQLite::getLibVersion() << ")" << std::endl;
+    //    std::cout << "SQliteC++ version " << SQLITECPP_VERSION << std::endl;
+    //    sqlite_handle=new SQLite::Database(":memory:", SQLite::OPEN_READWRITE);
 
 
-//    string TransactionRecordSql=
-//            string("CREATE TABLE TransactionRecord(")  +
-//            "Date                 TEXT     NOT NULL," +
-//            "Exchange         TEXT    NOT NULL," +
-//            "Product            TEXT     NOT NULL," +
-//            "Instrument       TEXT      NOT NULL," +
-//            "BS                    TEXT        NOT NULL," +
-//            "Price               DOUBLE     NOT NULL," +
-//            "Lots                INT         NOT NULL," +
-//            "Turnover           DOUBLE     NOT NULL," +
-//            "OC                TEXT              NOT NULL," +
-//            "Fee              DOUBLE        NOT NULL," +
-//            "RealizedPL        DOUBLE       NOT NULL," +
-//            "Trans_No        INT               NOT NULL );";
-//    sqlite_handle->exec(TransactionRecordSql);
-//    if(SQLite::OK!=sqlite_handle->getErrorCode())
-//    {
-//        cout<<sqlite_handle->getErrorMsg()<<endl;
-//    }
-//    else
-//    {
-//        cout<<"sqlite inti successfule"<<endl;
-//    }
+    //    string TransactionRecordSql=
+    //            string("CREATE TABLE TransactionRecord(")  +
+    //            "Date                 TEXT     NOT NULL," +
+    //            "Exchange         TEXT    NOT NULL," +
+    //            "Product            TEXT     NOT NULL," +
+    //            "Instrument       TEXT      NOT NULL," +
+    //            "BS                    TEXT        NOT NULL," +
+    //            "Price               DOUBLE     NOT NULL," +
+    //            "Lots                INT         NOT NULL," +
+    //            "Turnover           DOUBLE     NOT NULL," +
+    //            "OC                TEXT              NOT NULL," +
+    //            "Fee              DOUBLE        NOT NULL," +
+    //            "RealizedPL        DOUBLE       NOT NULL," +
+    //            "Trans_No        INT               NOT NULL );";
+    //    sqlite_handle->exec(TransactionRecordSql);
+    //    if(SQLite::OK!=sqlite_handle->getErrorCode())
+    //    {
+    //        cout<<sqlite_handle->getErrorMsg()<<endl;
+    //    }
+    //    else
+    //    {
+    //        cout<<"sqlite inti successfule"<<endl;
+    //    }
 
 }
 NiuTraderSpi::NiuTraderSpi(DataInitInstance&di, bool loginOK, CThostFtdcTraderApi* pUserApi): dii(di),_loginOK(loginOK),_pUserApi(pUserApi)
@@ -103,8 +103,8 @@ void NiuTraderSpi::ReqUserLogin()
     memset(&req, 0, sizeof(req));
 
     //    UserAccountInfo* ba=(UserAccountInfo*)_ba;
-   LOG(WARNING) <<"investorID="<<_investorID<<endl;
-   LOG(WARNING) <<"password="<<_password<<endl;
+    LOG(WARNING) <<"investorID="<<_investorID<<endl;
+    LOG(WARNING) <<"password="<<_password<<endl;
 
     strcpy(req.BrokerID, dii.BROKER_ID.c_str());
     strcpy(req.UserID, _investorID.c_str());
@@ -154,9 +154,9 @@ void NiuTraderSpi:: ReqQrySettlementInfo()
 
 void NiuTraderSpi::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-       string str;
+    string str;
     if (bIsLast && !IsErrorRspInfo(pRspInfo)){
-     str=strRspUserLoginField(pRspUserLogin);
+        str=strRspUserLoginField(pRspUserLogin);
         LOG(WARNING)<<(lexical_cast<string>(this)+"----->>>>OnRspUserLogin"+str);
         // 保存会话参数
 
@@ -176,12 +176,12 @@ void NiuTraderSpi::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,CTh
 
         boost::this_thread::sleep(boost::posix_time::seconds(1));
         ReqQrySettlementInfo();
-//        ReqQrySettlementInfoConfirm(broker_ID,investorID);
+        //        ReqQrySettlementInfoConfirm(broker_ID,investorID);
     }
     else
     {
-           str=strRspInfoField(pRspInfo);
-             LOG(WARNING)<<(lexical_cast<string>(this)+"----->>>>OnRspUserLogin"+str);
+        str=strRspInfoField(pRspInfo);
+        LOG(WARNING)<<(lexical_cast<string>(this)+"----->>>>OnRspUserLogin"+str);
     }
 }
 
@@ -193,10 +193,10 @@ void NiuTraderSpi::OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirm
     if (bIsLast && !IsErrorRspInfo(pRspInfo)&&pSettlementInfoConfirm)
     {
         LOG(WARNING) << "--------->>> " << "OnRspQrySettlementInfoConfirm"<<";userid="<<pSettlementInfoConfirm->InvestorID<<"date="<<
-                pSettlementInfoConfirm->ConfirmDate<<"time="<<pSettlementInfoConfirm->ConfirmTime<<endl;
+                        pSettlementInfoConfirm->ConfirmDate<<"time="<<pSettlementInfoConfirm->ConfirmTime<<endl;
         investorID=boost::lexical_cast<string>(pSettlementInfoConfirm->InvestorID);
         brokerID=boost::lexical_cast<string>(pSettlementInfoConfirm->BrokerID);
-//        _loginOK=true;
+        //        _loginOK=true;
         ReqQryTradingAccount();
         return;
     }
@@ -204,7 +204,7 @@ void NiuTraderSpi::OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirm
     {
         //    UserAccountInfo*uai=(UserAccountInfo*)_ba;
         LOG(WARNING) << "--------->>>OnRspQrySettlementInfoConfirm"
-             <<"investorID="<<investorID<<endl;
+                     <<"investorID="<<investorID<<endl;
         ReqQrySettlementInfo();
     }
 }
@@ -220,10 +220,10 @@ void NiuTraderSpi::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettle
         _settlemsg=between(_settlemsg,"UTF-8","GBK");
         lastmsg+=_settlemsg;
         LOG(WARNING)<<lastmsg<<endl;
-//        dii.saveTransactionRecordToSqlite(_settlemsg);
-//        SaveTransactionRecord();
+        //        dii.saveTransactionRecordToSqlite(_settlemsg);
+        //        SaveTransactionRecord();
         ReqSettlementInfoConfirm();
-         _settlemsg.clear();
+        _settlemsg.clear();
     }
 }
 
@@ -242,7 +242,7 @@ void NiuTraderSpi::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmFie
     if (bIsLast && !IsErrorRspInfo(pRspInfo)&&pSettlementInfoConfirm)
     {
         LOG(WARNING) << "----->>> OnRspSettlementInfoConfirm: investorID=" <<pSettlementInfoConfirm->InvestorID<< endl;
-//        _loginOK=true;
+        //        _loginOK=true;
         ReqQryTradingAccount();
     }
 }
@@ -273,7 +273,7 @@ void NiuTraderSpi::OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTradin
         //todo save account data to db;
         dii.saveCThostFtdcTradingAccountFieldToDb(pTradingAccount);
         ///请求查询投资者持仓
-//        boost::this_thread::sleep(boost::posix_time::seconds(1));
+        //        boost::this_thread::sleep(boost::posix_time::seconds(1));
         //todo clear positon db??
         if(!_loginOK)
             ReqQryInvestorPosition();
@@ -292,12 +292,12 @@ void NiuTraderSpi::ReqQryInvestorPosition()
     try
     {
         query.execute(delSql);
-         query.execute("commit");
+        query.execute("commit");
     }
     catch(const mysqlpp::BadQuery& er)
     {
         LOG(WARNING) << "exec error: " << er.what() << endl;
-         query.execute("commit");
+        query.execute("commit");
         LOG(ERROR)<<delSql;
         return ;
     }
@@ -392,8 +392,8 @@ void NiuTraderSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pIn
     if (!IsErrorRspInfo(pRspInfo) && pInvestorPosition)
     {
         hp=initpst(pInvestorPosition);
-          string info=strInvestorPositionField(pInvestorPosition);
-             LOG(WARNING) << "------->>>>OnRspQryInvestorPosition" <<info<<endl;
+        string info=strInvestorPositionField(pInvestorPosition);
+        LOG(WARNING) << "------->>>>OnRspQryInvestorPosition" <<info<<endl;
         dii.saveThostFtdcInvestorPositionFieldToDb(pInvestorPosition);
         int tmpArbVolume = 0;
         HoldPositionInfo* tmppst = hp;
@@ -488,7 +488,7 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
             //        cout<<"follow users="<<node->investorID<<endl;
             if(!node->GetLoginOK())
             {
-                 LOG(WARNING) <<(lexical_cast<string>(node))<<"is not ok";
+                LOG(WARNING) <<(lexical_cast<string>(node))<<"is not ok";
                 return;
             }
         }
@@ -545,13 +545,13 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
             }
             uof = UserOrderField::CreateUserOrderField(pOrder,node);
             uof->SetStatus('3');
-             cout<<"ReqOrderInsert22"<<endl;
+            cout<<"ReqOrderInsert22"<<endl;
             int ret= uof->ReqOrderInsert();
             //add to map for check
             if(ret==0)
             {
                 ct->putOrder(uof);
-//                userOrderField->SetStatus('3');
+                //                userOrderField->SetStatus('3');
                 //                 userOrderField->status='r';//test
             }
             else
@@ -835,34 +835,34 @@ void NiuTraderSpi::SaveTransactionRecord()
             try
             {
                 query.execute(sql);
-                 query.execute("commit");
+                query.execute("commit");
             }
             catch (const mysqlpp::Exception& er)
             {
                 LOG(ERROR)  << "exec error: " << er.what() <<"  "<<sql<< endl;
-                 query.execute("commit");
-               // return ;
+                query.execute("commit");
+                // return ;
             }
-//            sqlite_handle->exec(sql);
+            //            sqlite_handle->exec(sql);
         }
 
-//        _total_trade_num = sqlite_handle->execAndGet("select sum(Lots) from  TransactionRecord;");
-//        LOG(WARNING)<< "_total_trade_num=" << _total_trade_num;
+        //        _total_trade_num = sqlite_handle->execAndGet("select sum(Lots) from  TransactionRecord;");
+        //        LOG(WARNING)<< "_total_trade_num=" << _total_trade_num;
 
-//        _profit_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where RealizedPL>0;");
-//        LOG(WARNING)<< "_profit_num=" << _profit_num ;
+        //        _profit_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where RealizedPL>0;");
+        //        LOG(WARNING)<< "_profit_num=" << _profit_num ;
 
-//        _close_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where OC not in ('开');");
-//        LOG(WARNING) << "_close_num=" << _close_num ;
+        //        _close_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where OC not in ('开');");
+        //        LOG(WARNING) << "_close_num=" << _close_num ;
 
-//        _profit= sqlite_handle->execAndGet("select sum(RealizedPL) from TransactionRecord where RealizedPL>0;");
-//        LOG(WARNING)<< "_profit=" << _profit ;
+        //        _profit= sqlite_handle->execAndGet("select sum(RealizedPL) from TransactionRecord where RealizedPL>0;");
+        //        LOG(WARNING)<< "_profit=" << _profit ;
 
-//        _loss = sqlite_handle->execAndGet("select sum(RealizedPL) from TransactionRecord where RealizedPL<0;");
-//        LOG(WARNING)<< "_loss=" << _loss;
+        //        _loss = sqlite_handle->execAndGet("select sum(RealizedPL) from TransactionRecord where RealizedPL<0;");
+        //        LOG(WARNING)<< "_loss=" << _loss;
 
-//        _loss_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where RealizedPL<0;");
-//        LOG(WARNING)<< "_loss_num=" << _loss_num ;
+        //        _loss_num = sqlite_handle->execAndGet("select count(*) from TransactionRecord where RealizedPL<0;");
+        //        LOG(WARNING)<< "_loss_num=" << _loss_num ;
     }
 }
 
@@ -928,7 +928,7 @@ HoldPositionInfo* NiuTraderSpi:: initpst(CThostFtdcInvestorPositionField *pInves
     }
     else
     {
-//        LOG(ERROR) << string(InstrumentID) + ";error:持仓类型无法判断PosiDirection=" + str_dir;
+        //        LOG(ERROR) << string(InstrumentID) + ";error:持仓类型无法判断PosiDirection=" + str_dir;
         LOG(WARNING)<< string(InstrumentID) <<";error:持仓类型无法判断PosiDirection="<<str_dir<<endl;
         return tmpinfo;
     }

@@ -41,7 +41,7 @@ void ChkThread::run()
                 ForderMap.erase(key2);
                 delete uof;
 
-                    break;
+                break;
             }
             else
             {
@@ -55,7 +55,7 @@ void ChkThread::run()
         LOG(WARNING)<<"NorderMap size="<<NorderMap.size()<<endl;
         LOG(WARNING)<<"ForderMap size="<<ForderMap.size()<<endl;
         mtx.unlock();
-//        it=NorderMap.begin();
+        //        it=NorderMap.begin();
         if(it!=NorderMap.end())
             continue;
         sleep(10);
