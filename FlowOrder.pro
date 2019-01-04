@@ -5,10 +5,8 @@ CONFIG -= qt
 TARGET = followOrder
 
 SOURCES += main.cpp \
-    property.cpp \
     util.cpp \
     dataprocessor.cpp \
-    timeprocesser.cpp \
     traderspi.cpp \
     chkthread.cpp \
     niutraderspi.cpp \
@@ -22,7 +20,6 @@ HEADERS += \
     util.h \
     dataprocessor.h \
     DBtable.h \
-    timeprocesser.h \
     traderspi.h \
     chkthread.h \
     niutraderspi.h \

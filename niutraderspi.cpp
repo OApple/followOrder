@@ -19,7 +19,6 @@ using boost::algorithm::trim_copy;
 #include <ThostFtdcTraderApi.h>
 #include "traderspi.h"
 #include "dataprocessor.h"
-#include "tradeprocessor.h"
 #include "property.h"
 #include "util.h"
 #include "chkthread.h"

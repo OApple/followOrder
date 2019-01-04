@@ -13,7 +13,6 @@
 
 #include "traderspi.h"
 #include "dataprocessor.h"
-#include "tradeprocessor.h"
 #include "property.h"
 
 

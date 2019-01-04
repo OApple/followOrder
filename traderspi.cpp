@@ -20,7 +20,6 @@ using boost::is_any_of;
 
 #include "traderspi.h"
 #include "dataprocessor.h"
-#include "tradeprocessor.h"
 #include "property.h"
 #include "util.h"
 #include "chkthread.h"

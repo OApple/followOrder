@@ -72,86 +72,7 @@ public:
     TThostFtdcPriceType	LowerLimitPrice = 0;
     bool isPriceInit = false;
 };
-///资金账户
-class TradingAccountField
-{
-public:
-    ///经纪公司代码
-    string	brokerID;
-    ///投资者帐号
-    string	accountID;
-    ///手续费
-    double	commission;
-    ///平仓盈亏
-    double	closeProfit;
-    ///持仓盈亏
-    double	positionProfit;
-    ///可用资金
-    double	available;
-};
 
-//class BaseAccount
-//{
-//public:
-//    string  investorID="";						///< 用户代码
-//    string password="";
-//    string hedgeFlag="1";
-//    CThostFtdcTraderApi* pUserApi ;
-//    CTraderSpi* pUserSpi ;
-//};
-/*user account info*/
-//class UserAccountInfo//:public BaseAccount
-//{
-//public:
-//    string  investorID="";						///< 用户代码
-//    string password="";
-//    string hedgeFlag="1";
-//    CThostFtdcTraderApi* pUserApi ;
-//    CThostFtdcTraderSpi* pUserSpi ;
-
-//    vector<string> nbman;
-//    vector<UserAccountInfo*> follow;
-//    string brokerID;
-//    int frontID;
-//    int sessionID;
-//    string ratio;
-//    int orderRef;
-//    int followTick=1;
-//    char priceType;
-//    bool  isNiu;
-//    unordered_map<string, HoldPositionInfo*> positionmap;//hold info
-//    //TradingAccountField tradingAccount;
-//    unordered_map<string, bool> holdPstIsLocked;			//保存已经锁仓的报单，防止多次未知单回报导致的多次锁仓情况。
-//};
-/*order fields for assembling a orderinsert object*/
-//class UserOrderField
-//{
-//public:
-//    int frontID;
-//    int sessionID;
-//    unsigned int orderRef;
-//    int requestID;
-//    string direction;
-//    string instrumentID;
-//    string offsetFlag;
-//    string hedgeFlag;
-//    double orderInsertPrice;
-//    int volume;
-//    string mkType;
-
-//    //string orderType;//addition info
-//    string timeFlag="0";
-//    string investorID="";
-//    string brokerID="";
-//    int followCount=0;// follow order times
-//    string orderPriceType="2";
-//    CThostFtdcTraderSpi* _pTraderSpi;
-//     CThostFtdcTraderApi* _pUserApi;
-//      string orderSysID;
-//      char status='z';
-//      string NOrderSysID;
-//       string NinvestorID;
-//};
 /*报单信息*/
 class OrderInfo
 {
@@ -197,28 +118,6 @@ public:
     bool loginOK;
     CThostFtdcTraderSpi* pUserSpi;
     CThostFtdcTraderApi* pUserApi;			// 创建UserApi
-
-};
-
-/*组合报单信息*/
-class TradeInfo
-{
-public:
-    string tradingDay = "";
-    string tradeTime = "";
-    boost::atomic_int32_t orderSeq;//组合报单序号
-    string systemID = "";//系统编号，每个产品一个编号
-    string activeOrderActionStatus = "100";//活跃合约撤单状态：0,表示成交；100，初始,发送活跃合约报单，还未收到回报；110，撤单中；120，已撤单，追单中;其他，表示收到报单的回报状态
-    int sessionID;
-    int frontID;
-    string instrumentID;
-    string direction;
-    string investorID;
-    string offsetFlag;
-    double tradePrice = 0;
-    int volume;
-    double realOpenPrice = 0;//不活跃合约实际开仓成交价格
-    double realClosePrice = 0;//不活跃合约实际平仓成交价格
 
 };
 
