@@ -48,16 +48,6 @@ int main(int argc, char**argv)
 }
 
 
-//void mkdataInit() {
-//    cout << "start to init mdApi" << endl;
-//    mdUserApi = CThostFtdcMdApi::CreateFtdcMdApi("log2");			// 创建UserApi
-//    CThostFtdcMdSpi* pUserSpi = new CMdSpi();
-//    mdUserApi->RegisterSpi(pUserSpi);						// 注册事件类
-//    cout<<"forntip="<<dii.MARKET_FRONT_ADDR<<endl;
-//    mdUserApi->RegisterFront(dii.MARKET_FRONT_ADDR);					// connect
-//    mdUserApi->Init();
-//    cout << "end init mdApi" << endl;
-//}
 void startSendMDThread(int sendtype)
 {
     //TraderDemo temp;
