@@ -11,7 +11,7 @@ UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder
 
     vector<string> tmp;
     split(tmp,uai->ratio,is_any_of(":"));
-    int n1=lexical_cast<int>(tmp[1]);
+    int n1=lexical_cast<double>(tmp[1]);
     int n2=lexical_cast<int>(tmp[0]);
     int totalVolume=(pOrder->VolumeTotalOriginal*n1/n2);
     UserOrderField* userOrderField = new UserOrderField();

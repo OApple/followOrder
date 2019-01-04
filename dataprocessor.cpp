@@ -382,9 +382,7 @@ void DataInitInstance:: GetConfigFromRedis()
         vector<string> nmanspli;
         boost::split(nmanspli,tmp[1],boost::is_any_of("/"));
         NiuTraderSpi* ba=new NiuTraderSpi(*this,nmanspli[0],(nmanspli[1]));
-//        ba->nbman=user;
         ba->setFollow(vac);
-        //        ba->isNiu=true;
         unordered_map<string, NiuTraderSpi*>::iterator it_map_strs = NBAccountMap.find(ba->getInvestorID());
         if (it_map_strs == NBAccountMap.end())
         {
