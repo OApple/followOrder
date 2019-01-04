@@ -53,6 +53,5 @@ void startSendMDThread(int sendtype)
     //TraderDemo temp;
     //temp.m_queryServerIp = boost::lexical_cast<string>(TRADE_FRONT_ADDR);
    // thread_log_group.create_thread(&ttt);
-    //thread_log_group.create_thread(processStrategy);
-    //thread_log_group.create_thread(metricProcesser);
+  
 }
