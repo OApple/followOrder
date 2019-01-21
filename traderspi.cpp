@@ -27,47 +27,36 @@ using boost::is_any_of;
 
 #pragma warning(disable : 4996)
 
-
-CTraderSpi::CTraderSpi(DataInitInstance &di, string investorID):dii(di)
+//126373/123456/1:1/1/1
+CTraderSpi:: CTraderSpi(DataInitInstance&di, string&config):dii(di)
 {
+    vector<string> config_list ;
+    boost::split(config_list,config,boost::is_any_of("/"));
+     _investorID=config_list[0];
+    password=config_list[1];
+    ratio=config_list[2];
+    priceType=boost::lexical_cast<int>(config_list[3]);
+    followTick=boost::lexical_cast<int>(config_list[4]);
+
+
     _trade_front_addr= dii._trade_front_addr;
-    _investorID=investorID;
+    _brokerID=dii.broker_id;
+
     string prefix=_investorID+"/"+dii.getTime()+"/";
     system(("mkdir  -p "+prefix).c_str());
     CThostFtdcTraderApi* pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(prefix.c_str());			// 创建UserApi
     pUserApi->RegisterSpi((CThostFtdcTraderSpi*)this);			// 注册事件类
     pUserApi->SubscribePublicTopic(THOST_TERT_RESUME);					// 注册公有流
     pUserApi->SubscribePrivateTopic(THOST_TERT_RESUME);					// 注册私有流
-    pUserApi->RegisterFront((char*)(_trade_front_addr.c_str()));
+
+    pUserApi->RegisterFront("tcp://180.168.146.187:10001");
+    pUserApi->RegisterFront("tcp://218.202.237.33:10002");
+//    pUserApi->RegisterFront("tcp://180.168.146.187:10030");
+     pUserApi->RegisterFront((char*)(_trade_front_addr.c_str()));
+
     _pUserApi=pUserApi;
-
-    //    sqlite_handle=new SQLite::Database(":memory:", SQLite::OPEN_READWRITE);
-
-
-    //    string TransactionRecordSql=
-    //            string("CREATE TABLE TransactionRecord(")  +
-    //            "Date                 TEXT     NOT NULL," +
-    //            "Exchange         TEXT    NOT NULL," +
-    //            "Product            TEXT     NOT NULL," +
-    //            "Instrument       TEXT      NOT NULL," +
-    //            "BS                    TEXT        NOT NULL," +
-    //            "Price               DOUBLE     NOT NULL," +
-    //            "Lots                INT         NOT NULL," +
-    //            "Turnover           DOUBLE     NOT NULL," +
-    //            "OC                TEXT              NOT NULL," +
-    //            "Fee              DOUBLE        NOT NULL," +
-    //            "RealizedPL        DOUBLE       NOT NULL," +
-    //            "Trans_No        INT               NOT NULL );";
-    //    sqlite_handle->exec(TransactionRecordSql);
-    //    if(SQLite::OK!=sqlite_handle->getErrorCode())
-    //    {
-    //        cout<<sqlite_handle->getErrorMsg()<<endl;
-    //    }
-    //    else
-    //    {
-    //        cout<<"sqlite inti successfule"<<endl;
-    //    }
 }
+
 
 CTraderSpi::CTraderSpi( DataInitInstance &di,
                         bool loginOK,
@@ -96,11 +85,8 @@ void CTraderSpi::ReqUserLogin()
     CThostFtdcReqUserLoginField req;
     memset(&req, 0, sizeof(req));
 
-    //    UserAccountInfo* ba=(UserAccountInfo*)_ba;
-    //    cout<<"investorID="<<ba->investorID<<endl;
-    //    cout<<"password="<<ba->password<<endl;
 
-    strcpy(req.BrokerID, dii.BROKER_ID.c_str());
+    strcpy(req.BrokerID, _brokerID.c_str());
     strcpy(req.UserID, _investorID.c_str());
     strcpy(req.Password, password.c_str());
     int iResult = _pUserApi->ReqUserLogin(&req, ++iRequestID);
@@ -594,7 +580,7 @@ int CTraderSpi::ReqOrderInsert(UserOrderField* userOrderField)
     ///买卖方向:
     req.Direction=userOrderField->_direction;
 
-    ///组合开平标志: 开仓
+    ///组合开平标志
     req.CombOffsetFlag[0]=userOrderField->_offset_flag.c_str()[0];
 
     ///组合投机套保标志
@@ -670,9 +656,9 @@ void CTraderSpi::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThost
 
     LOG(INFO)<<(lexical_cast<string>(this)+"-------->>>OnRspOrderInsert:"+rsp+"###"+sInputOrderInfo);
 
-    ChkThread*ct=  ChkThread::GetInstance();
+    ChkThread&ct=  ChkThread::GetInstance();
     string key=GetKey2(pInputOrder);
-    UserOrderField*userOrderField =  ct->get_Fuser_order(key);
+    UserOrderField*userOrderField =  ct.get_Fuser_order(key);
     if(userOrderField!=NULL)
         userOrderField->SetStatus('7');
     // save to db
@@ -886,9 +872,9 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
     if(pOrder->OrderStatus == '0')
     {
         //modify
-        ChkThread*ct=  ChkThread::GetInstance();
+        ChkThread&ct=  ChkThread::GetInstance();
         string key=GetKey2(pOrder);
-        UserOrderField*userOrderField =  ct->get_Fuser_order(key);
+        UserOrderField*userOrderField =  ct.get_Fuser_order(key);
         if(userOrderField!=NULL)
             userOrderField->SetStatus('5');
         return ;
@@ -896,9 +882,9 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 
     if(pOrder->OrderStatus == '1')
     {
-        ChkThread*ct=  ChkThread::GetInstance();
+        ChkThread&ct=  ChkThread::GetInstance();
         string key=GetKey2(pOrder);
-        UserOrderField*userOrderField =  ct->get_Fuser_order(key);
+        UserOrderField*userOrderField =  ct.get_Fuser_order(key);
         if(userOrderField!=NULL)
             userOrderField->SetStatus('1');
         return ;
@@ -906,9 +892,9 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 
     if(pOrder->OrderStatus == '2')
     {
-        ChkThread*ct=  ChkThread::GetInstance();
+        ChkThread&ct=  ChkThread::GetInstance();
         string key=GetKey2(pOrder);
-        UserOrderField*userOrderField =  ct->get_Fuser_order(key);
+        UserOrderField*userOrderField =  ct.get_Fuser_order(key);
         if(userOrderField!=NULL)
             userOrderField->SetStatus('2');
         return ;
@@ -916,7 +902,7 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 
     if(pOrder->OrderStatus == '3')
     {
-        ChkThread*ct=  ChkThread::GetInstance();
+        ChkThread&ct=  ChkThread::GetInstance();
         string key=GetKey2(pOrder);
         //        UserOrderField*userOrderField =  ct->get_Fuser_order(key);
         //        if(userOrderField!=NULL)

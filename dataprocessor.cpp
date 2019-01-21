@@ -6,6 +6,7 @@ typedef HMODULE		T_DLL_HANDLE;
 #include <stdlib.h>
 #include <stdio.h>
 #include <dlfcn.h>
+#include <algorithm>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/foreach.hpp>
@@ -28,30 +29,21 @@ using boost::algorithm::trim_copy;
 
 using namespace std;
 // 请求编号
-extern int iRequestID;
+//extern int iRequestID;
 
-DataInitInstance::DataInitInstance(void){
-}
 DataInitInstance::~DataInitInstance(void)
 {
 }
 
 
 //user=126373/123456/1:1/1/1,122467/lhh520/1:5/2/2
-void DataInitInstance::insert_follow_user(string users,vector<string>&userlist,vector<CTraderSpi*>& vac)
+void DataInitInstance::insert_follow_user(string users,vector<CTraderSpi*>& vac)
 {
     string spreadList = users;
     vector<string> tmp_splists ;
     boost::split(tmp_splists,spreadList,boost::is_any_of(","));//
     for (unsigned int i = 0; i < tmp_splists.size();i++) {//num follow user
-        vector<string> tmpacc ;
-        boost::split(tmpacc,tmp_splists[i],boost::is_any_of("/"));
-        CTraderSpi* ba=new CTraderSpi(*this,tmpacc[0]);
-        ba->password=tmpacc[1];
-        ba->ratio=tmpacc[2];
-        ba->priceType=boost::lexical_cast<int>(tmpacc[3]);
-        ba->followTick=boost::lexical_cast<int>(tmpacc[4]);
-        userlist.push_back(tmpacc[0]);
+        CTraderSpi* ba=new CTraderSpi(*this,tmp_splists[i]);
         vac.push_back(ba);
     }
 
@@ -75,87 +67,26 @@ void DataInitInstance::GetConfigFromFile(){
             split(name_value,str, is_any_of("="));
             if(name_value.size()!=2){
                 continue;
-            } else if ("investorid" == name_value[0]) {
-                //INVESTOR_ID = vec[1];
-                //strcpy(INVESTOR_ID, vec[1].c_str());
-            }else if ("environment" == name_value[0]) {
-                environment = name_value[1];
+            } else if ("useReal" == name_value[0]) {
+                useReal = lexical_cast<int>(name_value[1]);
                 //strcpy(BROKER_ID, vec[1].c_str());
             }
-            else if ("marketServerIP" == name_value[0]) {
-                marketServerIP = name_value[1];
+            else if ("realTradeFrontAddr" == name_value[0]) {
+                realTradeFrontAddr = name_value[1];
             }
-            else if ("marketServerPort" == name_value[0]) {
-                marketServerPort = boost::lexical_cast<int>(name_value[1]);
-            }else if ("tradeServerIP" == name_value[0]) {
-                tradeServerIP = name_value[1];
+           else if ("realBrokerID" == name_value[0]) {
+                realBrokerID = name_value[1];
             }
-            else if ("tradeServerPort" == name_value[0]) {
-                tradeServerPort = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("queryServerPort" == name_value[0]) {
-                queryServerPort = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("queryServerIP" == name_value[0]) {
-                queryServerIP = name_value[1];
-            }else if ("exgTradeFrontIPCSHFE" == name_value[0]) {
-                exgTradeFrontIPCSHFE = name_value[1];
-            }else if ("exgParticipantIDCSHFE" == name_value[0]) {
-                exgParticipantIDCSHFE = name_value[1];
-            }else if ("brokerid" == name_value[0]) {
-                BROKER_ID = name_value[1];
-                //strcpy(BROKER_ID, vec[1].c_str());
-            }else if ("exgTraderIDCSHFE" == name_value[0]) {
-                exgTraderIDCSHFE = name_value[1];
-            }else if ("exgTraderPasswdCSHFE" == name_value[0]) {
-                exgTraderPasswdCSHFE = name_value[1];
-            }
-            else if ("exgFlowType" == name_value[0]) {
-                exgFlowType = name_value[1];
-            }
-            else if ("profitValue" == name_value[0]) {
-                //profitValue = boost::lexical_cast<double>(vec[1]);
-            }
-            else if ("remoteTradeServerPort" == name_value[0]) {
-                remoteTradeServerPort = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("remoteMkdataServerPort" == name_value[0]) {
-                mkdatasrvport = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("password" == name_value[0]) {
-                PASSWORD = name_value[1];
-                //strcpy(PASSWORD, vec[1].c_str());
-            }else if ("loginid" == name_value[0]) {
-                LOGIN_ID = name_value[1];
-            }
-            else if ("notActiveInsertAmount" == name_value[0]) {
-                notActiveInsertAmount = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("arbVolumeMetric" == name_value[0]) {
-                arbVolumeMetric = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("arbVolume" == name_value[0]) {
-                arbVolume = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("orderInsertInterval" == name_value[0]) {
-                orderInsertInterval = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("maxFollowTimes" == name_value[0]) {
-                maxFollowTimes = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("maxUntradeNums" == name_value[0]) {
-                maxUntradeNums = boost::lexical_cast<int>(name_value[1]);
-            }
-            else if ("biasTickNums" == name_value[0]) {
-                biasTickNums = boost::lexical_cast<int>(name_value[1]);
-            }
+            else if ("brokerID" == name_value[0]) {
+                 broker_id = name_value[1];
+             }
+
+
             else if ("mdFrontAddr" == name_value[0]) {
                 _market_front_addr= name_value[1];
             }
             else if ("tradeFrontAddr" == name_value[0]) {
                 _trade_front_addr=name_value[1];
-            }else if ("followTimes" == name_value[0]) {
-                followTimes=boost::lexical_cast<int>(name_value[1]);
             }else if("DBHost"== name_value[0]){
                 db_host=name_value[1];
             }else if("DBUser"==name_value[0]){
@@ -182,12 +113,15 @@ void DataInitInstance::GetConfigFromFile(){
         }
     }
 }
+//bool sortfunction (CTraderSpi* i,CTraderSpi* j)
+//{ return (i->investorID()==j->investorID()); }
 
 void DataInitInstance:: GetConfigFromRedis()
 {
     redis_con=Redis(redis_host,redis_port,redis_pwd);
     redis_con.connect();
-    string followUser=redis_con.get("followUser");
+    followUser=redis_con.get("followUser");
+
     LOG(ERROR) <<"redis followuser="<<followUser<<endl;
     vector<string> user_nman;
     boost::split(user_nman,followUser,boost::is_any_of("&"));//user~nman&user~nman
@@ -197,15 +131,13 @@ void DataInitInstance:: GetConfigFromRedis()
         vector<string> tmp;
         boost::split(tmp,user_nman[i],boost::is_any_of("~"));//user~nman  tmp[0]=126373/123456/1:1/1/1,122467/lhh520/1:5/2/2   tmp[1]=5555/78899
 
-        vector<string> user;
         vector<CTraderSpi*> vac;
-        insert_follow_user(tmp[0],user,vac);
+        insert_follow_user(tmp[0],vac);
 
-        vector<string> nmanspli;
-        boost::split(nmanspli,tmp[1],boost::is_any_of("/"));
-        NiuTraderSpi* ba=new NiuTraderSpi(*this,nmanspli[0],(nmanspli[1]));
+
+        NiuTraderSpi* ba=new NiuTraderSpi(*this,tmp[1]);
         ba->setFollow(vac);
-        unordered_map<string, NiuTraderSpi*>::iterator it_map_strs = NBAccountMap.find(ba->getInvestorID());
+        auto it_map_strs = NBAccountMap.find(ba->getInvestorID());
         if (it_map_strs == NBAccountMap.end())
         {
             NBAccountMap[ba->getInvestorID()] = ba;
@@ -339,7 +271,8 @@ void DataInitInstance::saveThostFtdcInvestorPositionFieldToDb(CThostFtdcInvestor
             "margin_rate_by_volume ,"
             "strike_frozen         ,"
             "abandon_frozen        ,"
-            "strike_frozen_amount  )"
+            "strike_frozen_amount   ,"
+            "open_price )"
             "VALUES (";
     //boost::trim(positonsql);
     vector<string> res = getInstrumentIDZH(string(pInvestorPosition->InstrumentID));
@@ -347,54 +280,54 @@ void DataInitInstance::saveThostFtdcInvestorPositionFieldToDb(CThostFtdcInvestor
     positonsql.append("'"+string(pInvestorPosition->InstrumentID)+"'")  ;positonsql.append(",'");
     positonsql.append(pInvestorPosition->BrokerID)  ;positonsql.append("','");
     positonsql.append(pInvestorPosition->InvestorID)  ;positonsql.append("',");
-    positonsql.push_back(pInvestorPosition->PosiDirection);
-    positonsql.append(",");
-    positonsql.push_back(pInvestorPosition->HedgeFlag);
-    positonsql.append(",");
-    positonsql.push_back(pInvestorPosition->PositionDate);
-    positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->Position))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->YdPosition))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->LongFrozen))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->ShortFrozen))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->LongFrozenAmount))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->ShortFrozenAmount))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->OpenVolume))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->CloseVolume))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->OpenAmount))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->CloseAmount))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->PositionCost))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->PreMargin))  ;positonsql.append(",");
-    string tmp=boost::lexical_cast<string>(pInvestorPosition->UseMargin);
-    positonsql.append(tmp.substr(0,tmp.find(".",0)+2))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->FrozenMargin))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->FrozenCash))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->FrozenCommission))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->CashIn))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->Commission))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->CloseProfit))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->PositionProfit))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->PreSettlementPrice))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->SettlementPrice))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->TradingDay))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->SettlementID))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->OpenCost))  ;positonsql.append(",");
-    tmp=boost::lexical_cast<string>(pInvestorPosition->ExchangeMargin);
-    positonsql.append(tmp.substr(0,tmp.find(".",0)+2))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->CombPosition))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->CombLongFrozen))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->CombShortFrozen))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->CloseProfitByDate))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->CloseProfitByTrade))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->TodayPosition))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->MarginRateByMoney))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->MarginRateByVolume))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->StrikeFrozen))  ;positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->AbandonFrozen));positonsql.append(",");
-    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->StrikeFrozenAmount));positonsql.append(");");
+    positonsql.push_back(pInvestorPosition->PosiDirection);positonsql.append(",");
+    positonsql.push_back(pInvestorPosition->HedgeFlag); positonsql.append(",");
+    positonsql.push_back(pInvestorPosition->PositionDate);positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->Position))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->YdPosition))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->LongFrozen))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->ShortFrozen))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->LongFrozenAmount))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->ShortFrozenAmount))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->OpenVolume))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->CloseVolume))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->OpenAmount))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->CloseAmount))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->PositionCost))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->PreMargin))  ;positonsql.append(",");
+//    string tmp=lexical_cast<string>(pInvestorPosition->UseMargin);
+    positonsql.append(lexical_cast<string>(pInvestorPosition->UseMargin))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->FrozenMargin))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->FrozenCash))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->FrozenCommission))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->CashIn))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->Commission))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->CloseProfit))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->PositionProfit))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->PreSettlementPrice))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->SettlementPrice))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->TradingDay))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->SettlementID))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->OpenCost))  ;positonsql.append(",");
+//    tmp=lexical_cast<string>(pInvestorPosition->ExchangeMargin);
+    positonsql.append(lexical_cast<string>(pInvestorPosition->ExchangeMargin))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->CombPosition))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->CombLongFrozen))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->CombShortFrozen))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->CloseProfitByDate))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->CloseProfitByTrade))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->TodayPosition))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->MarginRateByMoney))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->MarginRateByVolume))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->StrikeFrozen))  ;positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->AbandonFrozen));positonsql.append(",");
+    positonsql.append(lexical_cast<string>(pInvestorPosition->StrikeFrozenAmount));positonsql.append(",");
+    double open_price=0;
+    int muli=getInstrumentMulti(pInvestorPosition->InstrumentID);
+     open_price=pInvestorPosition->OpenCost/(muli*pInvestorPosition->Position);
+     positonsql.append(lexical_cast<string>(open_price)); positonsql.append(");");
     //    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->OpenPrice))
     //   LOG(ERROR) <<"position sql="<<positonsql<<endl;
-
     try
     {
         query.execute(positonsql);
@@ -548,7 +481,7 @@ void DataInitInstance::saveThostFtdcInputOrderFieldToDb(CThostFtdcInputOrderFiel
         //double price =((int)(pDepthMarketData->LastPrice + 0.005)*100)/100;
         row.price=pInputOrder->LimitPrice;
         row.volume=pInputOrder->VolumeTotalOriginal;
-        row.offsetflag = pInputOrder->CombHedgeFlag[0];
+        row.offsetflag = pInputOrder->CombOffsetFlag[0];
         row.brokerid = pInputOrder->BrokerID;
         row.direction = pInputOrder->Direction;
         row.tradetype = "0";
@@ -748,9 +681,9 @@ vector<string> DataInitInstance::getInstrumentIDZH(string InstrumentID)
     {
         char s = InstrumentID[i] ;
         if(s >='0' && s<='9')
-            instrumentid_ch.push_back(s);
+            instrumentid_ch.push_back(s);//number
         else
-            variety_ch.push_back(s);
+            variety_ch.push_back(s);//alpha
     }
 
     variety_ch = getHeyueName(variety_ch);
@@ -760,6 +693,154 @@ vector<string> DataInitInstance::getInstrumentIDZH(string InstrumentID)
     res.push_back(instrumentid_ch);
     res.push_back(variety_ch);
     return res;
+}
+double DataInitInstance::getPriceTick(string InstrumentID)
+{
+    string productid="";
+    string instrumentid_ch="";
+    boost::algorithm::to_upper(InstrumentID);
+    for (int i = 0; i < InstrumentID.length(); i++)
+    {
+        char s = InstrumentID[i] ;
+        if(s >='0' && s<='9')
+            instrumentid_ch.push_back(s);//number
+        else
+            productid.push_back(s);//alpha
+    }
+
+    if("A"==productid) return 1;
+    else if("B"==productid) return 1;
+    else if("BB"==productid) return 0.05;
+    else if("C"==productid) return 1;
+    else if("CS"==productid) return 1;
+    else if("FB"==productid) return 0.05;
+    else if("I"==productid) return 0.5;
+    else if("J"==productid) return 0.5;
+    else if("JD"==productid) return 1;
+    else if("JM"==productid) return 0.5;
+    else if("L"==productid) return 5;
+    else if("M"==productid) return 1;
+    else if("P"==productid) return 2;
+    else if("PP"==productid) return 1;
+    else if("V"==productid) return 5;
+    else if("Y"==productid) return 2;
+    else if("AG"==productid) return 1;
+    else if("AL"==productid) return 5;
+    else if("AU"==productid) return 0.05;
+    else if("BU"==productid) return 2;
+    else if("CU"==productid) return 10;
+    else if("FU"==productid) return 1;
+    else if("HC"==productid) return 1;
+    else if("NI"==productid) return 10;
+    else if("PB"==productid) return 5;
+    else if("RB"==productid) return 1;
+    else if("RU"==productid) return 5;
+    else if("SN"==productid) return 10;
+    else if("WR"==productid) return 1;
+    else if("ZN"==productid) return 5;
+    else if("CF"==productid) return 5;
+    else if("FG"==productid) return 1;
+    else if("JR"==productid) return 1;
+    else if("LR"==productid) return 1;
+    else if("MA"==productid) return 1;
+    else if("OI"==productid) return 1;
+    else if("PM"==productid) return 1;
+    else if("RI"==productid) return 1;
+    else if("RM"==productid) return 1;
+     else if("CY"==productid) return 5;
+    else if("RS"==productid) return 1;
+    else if("SF"==productid) return 2;
+    else if("SP"==productid) return 2;
+    else if("SM"==productid) return 2;
+    else if("SR"==productid) return 1;
+    else if("TA"==productid) return 2;
+    else if("WH"==productid) return 1;
+    else if("ZC"==productid) return 0.2;
+    else if("IC"==productid) return 0.2;
+    else if("IF"==productid) return 0.2;
+    else if("IH"==productid) return 0.2;
+    else if("T"==productid) return 0.005;
+    else if("TF"==productid) return 0.005;
+    else if("TS"==productid) return 0.005;
+    else if("AP"==productid) return 1;
+    else if("EG"==productid) return 1;
+    else if("SC"==productid) return 0.1;
+    else return 1;
+
+}
+
+int DataInitInstance::getInstrumentMulti(string InstrumentID)
+{
+    string productid="";
+    string instrumentid_ch="";
+    boost::algorithm::to_upper(InstrumentID);
+    for (int i = 0; i < InstrumentID.length(); i++)
+    {
+        char s = InstrumentID[i] ;
+        if(s >='0' && s<='9')
+            instrumentid_ch.push_back(s);//number
+        else
+            productid.push_back(s);//alpha
+    }
+
+    if("A"==productid) return 10;
+    else if("B"==productid) return 10;
+    else if("BB"==productid) return 500;
+    else if("C"==productid) return 10;
+    else if("CS"==productid) return 10;
+    else if("FB"==productid) return 500;
+    else if("I"==productid) return 100;
+    else if("J"==productid) return 100;
+    else if("JD"==productid) return 5;
+    else if("JM"==productid) return 60;
+    else if("L"==productid) return 5;
+    else if("M"==productid) return 10;
+    else if("P"==productid) return 10;
+    else if("PP"==productid) return 5;
+    else if("V"==productid) return 5;
+    else if("Y"==productid) return 10;
+    else if("AG"==productid) return 15;
+    else if("AL"==productid) return 5;
+    else if("AU"==productid) return 1000;
+    else if("BU"==productid) return 10;
+    else if("CU"==productid) return 5;
+    else if("FU"==productid) return 10;
+    else if("HC"==productid) return 10;
+    else if("NI"==productid) return 1;
+    else if("PB"==productid) return 5;
+    else if("RB"==productid) return 10;
+    else if("RU"==productid) return 10;
+    else if("SN"==productid) return 1;
+    else if("WR"==productid) return 10;
+    else if("ZN"==productid) return 5;
+    else if("CF"==productid) return 5;
+    else if("FG"==productid) return 20;
+    else if("JR"==productid) return 20;
+    else if("LR"==productid) return 20;
+    else if("MA"==productid) return 10;
+    else if("OI"==productid) return 10;
+    else if("PM"==productid) return 50;
+    else if("RI"==productid) return 20;
+    else if("RM"==productid) return 10;
+     else if("CY"==productid) return 5;
+    else if("RS"==productid) return 10;
+    else if("SF"==productid) return 5;
+    else if("SP"==productid) return 10;
+    else if("SM"==productid) return 5;
+    else if("SR"==productid) return 10;
+    else if("TA"==productid) return 5;
+    else if("WH"==productid) return 20;
+    else if("ZC"==productid) return 100;
+    else if("IC"==productid) return 200;
+    else if("IF"==productid) return 300;
+    else if("IH"==productid) return 300;
+    else if("T"==productid) return 10000;
+    else if("TF"==productid) return 10000;
+    else if("TS"==productid) return 20000;
+    else if("AP"==productid) return 10;
+    else if("EG"==productid) return 10;
+    else if("SC"==productid) return 1000;
+    else return 1;
 }
 
 string DataInitInstance::getHeyueName(string str)
@@ -803,19 +884,24 @@ string DataInitInstance::getHeyueName(string str)
     else if("PM"==str) return "普麦";
     else if("RI"==str) return "早稻";
     else if("RM"==str) return "菜粕";
+    else if("CY"==str) return "棉纱";
     else if("RS"==str) return "油籽";
     else if("SF"==str) return "硅铁";
+    else if("SP"==str) return "木浆";
     else if("SM"==str) return "锰硅";
     else if("SR"==str) return "白糖";
     else if("TA"==str) return "PTA";
     else if("WH"==str) return "强麦";
     else if("ZC"==str) return "动煤";
     else if("IC"==str) return "中证500股指";
-    else if("IF"==str) return "IF";
-    else if("IH"==str) return "IH";
-    else if("T"==str) return "T";
-    else if("TF"==str) return "TF";
+    else if("IF"==str) return "沪深300指数";
+    else if("IH"==str) return "上证50指数";
+    else if("T"==str) return "10年期国债";
+    else if("TF"==str) return "5年期国债";
+    else if("TS"==str) return "2年期国债";
     else if("AP"==str) return "鲜苹果";
+    else if("EG"==str) return "乙二醇";
+    else if("SC"==str) return "原油";
     else return "";
 
 }

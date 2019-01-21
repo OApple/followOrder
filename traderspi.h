@@ -16,7 +16,8 @@ public:
 
     CTraderSpi( DataInitInstance&di,  bool loginOK,CThostFtdcTraderApi* pUserApi);
 
-    CTraderSpi(DataInitInstance&di,string investorID);
+//126373/123456/1:1/1/1
+    CTraderSpi(DataInitInstance&di, string &config);
 
     CTraderSpi();
 
@@ -107,10 +108,13 @@ public:
     string _brokerID;
     int frontID;
     int sessionID;
+     int orderRef;
+
+
     string ratio;
-    int orderRef;
     int followTick=1;
     char priceType;
+
     CThostFtdcTraderApi* _pUserApi;
     int total_trade_num() const;
     void setTotal_trade_num(int total_trade_num);

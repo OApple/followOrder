@@ -13,7 +13,8 @@ SOURCES += main.cpp \
     traderspi.cpp \
     chkthread.cpp \
     niutraderspi.cpp \
-    user_order_field.cpp
+    user_order_field.cpp \
+    updatethread.cpp
 
 
 HEADERS += \
@@ -26,7 +27,8 @@ HEADERS += \
     traderspi.h \
     chkthread.h \
     niutraderspi.h \
-    user_order_field.h
+    user_order_field.h \
+    updatethread.h
 
 
 LIBS += -L$$PWD/../lib/   -lthostmduserapi  -lthosttraderapi

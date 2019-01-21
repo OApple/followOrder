@@ -1,5 +1,6 @@
-#ifndef CHKTHREAD_H
-#define CHKTHREAD_H
+#ifndef UPDATETHREAD_H
+#define UPDATETHREAD_H
+//#include <chkthread.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -23,41 +24,25 @@
 
 #include <glog/logging.h>
 #include <glog/log_severity.h>
-
-#include <ThostFtdcTraderApi.h>
-#include <ThostFtdcUserApiDataType.h>
-#include "property.h"
-#include "user_order_field.h"
-
 using namespace std;
-
-class ChkThread
+class UpdateThread
 {
 private:
-    unordered_map<string, UserOrderField*> NorderMap;
-    unordered_map<string, UserOrderField*> ForderMap;
     std::mutex mtx;
+     string followUser;
+     bool updateFlag;
     std::thread chkThread;
-    ChkThread(){}
+    UpdateThread(){}
     void run();
-
 public:
-    static ChkThread& GetInstance()
+    static UpdateThread& GetInstance()
     {
-        static ChkThread Instance;
+        static UpdateThread Instance;
         return Instance;
     }
 
-    void  start();
-    void putOrder(UserOrderField*userOrderField);
-    bool is_in_Nmap(string key);
-    UserOrderField*get_Nuser_order(string key);
-    UserOrderField*get_Fuser_order(string key);
-    void erase(UserOrderField *userOrderField);
-    void erase(string key);
-
-
+  void  start();
+  void setUpdate();
 };
 
-
-#endif // CHKTHREAD_H
+#endif // UPDATETHREAD_H

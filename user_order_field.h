@@ -55,6 +55,7 @@ private:
     string _offset_flag;
     string _hedge_flag;
     double _price;
+    double _price_tick;
     int _volume;
 
     string _key;

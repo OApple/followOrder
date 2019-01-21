@@ -11,9 +11,11 @@ UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder
 
     vector<string> tmp;
     split(tmp,uai->ratio,is_any_of(":"));
-    int n1=lexical_cast<double>(tmp[1]);
-    int n2=lexical_cast<int>(tmp[0]);
-    int totalVolume=(pOrder->VolumeTotalOriginal*n1/n2);
+    double n1=lexical_cast<double>(tmp[1]);
+    double n2=lexical_cast<int>(tmp[0]);
+    double totalVolume=(pOrder->VolumeTotalOriginal*n1/n2);
+    if(totalVolume<1)
+        totalVolume=1;
     UserOrderField* userOrderField = new UserOrderField();
     userOrderField->brokerID=uai->_brokerID;
     userOrderField->_direction=pOrder->Direction;
@@ -25,6 +27,7 @@ UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder
     userOrderField->_instrumentID=pOrder->InstrumentID;
     userOrderField->_investorID=uai->investorID();
     userOrderField->_tick=uai->followTick;
+    userOrderField->_price_tick=DataInitInstance::GetInstance().getPriceTick(pOrder->InstrumentID);
     userOrderField->_offset_flag=lexical_cast<string>(pOrder->CombOffsetFlag);
     if(uai->priceType==1)// nman price
     {
@@ -83,11 +86,11 @@ void UserOrderField::UpdatePrice()
 {
     if(_direction=='0')//buy
     {
-        _price+=_tick;
+        _price+=(_tick*_price_tick);
     }
     else//sell
     {
-        _price-=_tick;
+        _price-=(_tick*_price_tick);
     }
 
 }

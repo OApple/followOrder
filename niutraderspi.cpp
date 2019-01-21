@@ -24,15 +24,51 @@ using boost::algorithm::trim_copy;
 #include "chkthread.h"
 #include "niutraderspi.h"
 #include "user_order_field.h"
+#include "updatethread.h"
 
+//BrokerID统一为：9999
+//标准CTP：
+//    第一组：Trade Front：180.168.146.187:10000，Market Front：180.168.146.187:10010；【电信】
+//    第二组：Trade Front：180.168.146.187:10001，Market Front：180.168.146.187:10011；【电信】
+//    第三组：Trade Front：218.202.237.33 :10002，Market Front：218.202.237.33 :10012；【移动】
+//CTPMini1：
+//    第一组：Trade Front：180.168.146.187:10003，Market Front：180.168.146.187:10013；【电信】
+NiuTraderSpi::NiuTraderSpi(DataInitInstance&di, string&config):dii(di)
+{
+    vector<string> config_list ;
+    boost::split(config_list,config,boost::is_any_of("/"));
+    _investorID=config_list[0];
+    _password=config_list[1];
+    _trade_front_addr= dii._trade_front_addr;
+    _brokerID=dii.broker_id;
+    if(dii.useReal==1)
+    {
+        _trade_front_addr=dii.realTradeFrontAddr;
+         _brokerID=dii.realBrokerID;
+    }
 
+    string prefix=_investorID+"/"+dii.getTime()+"/";
+    system(("mkdir  -p "+prefix).c_str());
+    CThostFtdcTraderApi* pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(prefix.c_str());			// 创建UserApi
+    pUserApi->RegisterSpi((CThostFtdcTraderSpi*)this);			// 注册事件类
+    pUserApi->SubscribePublicTopic(THOST_TERT_RESUME);					// 注册公有流
+    pUserApi->SubscribePrivateTopic(THOST_TERT_RESUME);					// 注册私有流
+
+    pUserApi->RegisterFront("tcp://180.168.146.187:10001");
+    pUserApi->RegisterFront("tcp://218.202.237.33:10002");
+//    pUserApi->RegisterFront("tcp://180.168.146.187:10030");
+      pUserApi->RegisterFront((char*)(_trade_front_addr.c_str()));
+
+    _pUserApi=pUserApi;
+}
 
 NiuTraderSpi::NiuTraderSpi(DataInitInstance&di, string investorID, string passWord):dii(di)
 {
     _trade_front_addr= dii._trade_front_addr;
+
     _investorID=investorID;
     _password=passWord;
-    _brokerID=dii.BROKER_ID;
+    _brokerID=dii.broker_id;
     string prefix=_investorID+"/"+dii.getTime()+"/";
     system(("mkdir  -p "+prefix).c_str());
     CThostFtdcTraderApi* pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(prefix.c_str());			// 创建UserApi
@@ -106,7 +142,7 @@ void NiuTraderSpi::ReqUserLogin()
     LOG(WARNING) <<"investorID="<<_investorID<<endl;
     LOG(WARNING) <<"password="<<_password<<endl;
 
-    strcpy(req.BrokerID, dii.BROKER_ID.c_str());
+    strcpy(req.BrokerID, _brokerID.c_str());
     strcpy(req.UserID, _investorID.c_str());
     strcpy(req.Password, _password.c_str());
     int iResult = _pUserApi->ReqUserLogin(&req, ++_requestID);
@@ -477,6 +513,10 @@ void NiuTraderSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pIn
 void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 {
     //    return ;// test
+    //get config from redis
+//     dii.followUser=dii.redis_con.get("followUser");
+    UpdateThread&upt= UpdateThread::GetInstance();
+    upt.setUpdate();
     typedef  CTraderSpi*tmacc;
     LOG(WARNING) << "--->>>OnRtnOrder  InvestorID="<<pOrder->InvestorID<<"status=" <<pOrder->OrderStatus<< endl;
     string tmpstr = strOrderField(pOrder);
@@ -501,8 +541,8 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
         BOOST_FOREACH(tmacc&node,_follow)
         {
             string key=GetKey(pOrder,node);
-            ChkThread*ct=  ChkThread::GetInstance();
-            UserOrderField*uof=ct->get_Nuser_order(key);
+            ChkThread &ct=  ChkThread::GetInstance();
+            UserOrderField*uof=ct.get_Nuser_order(key);
             if((uof!=NULL)&&(uof->GetStatus()=='3'))
             {
                 uof->SetStatus('r');
@@ -520,7 +560,7 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
                 cout<<"ReqOrderInsert"<<endl;
                 int ret= uof->ReqOrderInsert();
                 if(ret==0)
-                    ct->putOrder(uof);
+                    ct.putOrder(uof);
                 else
                 {
                     delete uof;
@@ -536,8 +576,8 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
         BOOST_FOREACH(tmacc&node,_follow)
         {
             string key=GetKey(pOrder,node);
-            ChkThread*ct=  ChkThread::GetInstance();
-            UserOrderField*uof=ct->get_Nuser_order(key);
+            ChkThread&ct=  ChkThread::GetInstance();
+            UserOrderField*uof=ct.get_Nuser_order(key);
             int len=strlen(pOrder->ActiveUserID);
             if((uof!=NULL)||(len))
             {
@@ -550,7 +590,7 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
             //add to map for check
             if(ret==0)
             {
-                ct->putOrder(uof);
+                ct.putOrder(uof);
                 //                userOrderField->SetStatus('3');
                 //                 userOrderField->status='r';//test
             }
@@ -573,8 +613,8 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
         BOOST_FOREACH(tmacc&node,_follow)
         {
             string key=GetKey(pOrder,node);
-            ChkThread*ct=  ChkThread::GetInstance();
-            UserOrderField*uof=ct->get_Nuser_order(key);
+            ChkThread&ct=  ChkThread::GetInstance();
+            UserOrderField*uof=ct.get_Nuser_order(key);
             if(uof!=NULL)
             {
                 if(uof->GetStatus()!='7')

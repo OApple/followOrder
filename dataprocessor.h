@@ -34,9 +34,15 @@ class CTraderSpi;
 class NiuTraderSpi;
 
 class DataInitInstance{
+private:
+     DataInitInstance(){}
 public:
-
-    DataInitInstance(void);
+     static DataInitInstance& GetInstance()
+     {
+         static DataInitInstance Instance;
+         return Instance;
+     }
+//    DataInitInstance(void);
     virtual ~DataInitInstance(void);
     /************************************************************************/
     /* 初始化参数列表                                                                     */
@@ -46,7 +52,7 @@ public:
     void GetConfigFromFile();
     void GetConfigFromRedis();
     void DataInit();
-    void insert_follow_user(string users, vector<string>&userlist, vector<CTraderSpi *> &vac);
+    void insert_follow_user(string users, vector<CTraderSpi *> &vac);
     string getTime();
 
 
@@ -59,7 +65,9 @@ public:
     void  saveSettlementToDB(NiuTraderSpi &TraderSpi);
     void saveSettlementToDB(CTraderSpi &TraderSpi);
     vector<string> getInstrumentIDZH(string InstrumentID);
+    double getPriceTick(string InstrumentID);
     string getHeyueName(string str);
+    int getInstrumentMulti(string InstrumentID);
     //UserAccount* getTradeAccount(string);
     //void setUserAccount(UserAccount* ua);
 
@@ -68,33 +76,13 @@ public:
 
 
     //property config
-    string environment="1";//test environment
-    string marketServerIP = "";
-    int  marketServerPort = 0;
-    string tradeServerIP = "";
-    int tradeServerPort = 0;
-    int queryServerPort = 0;
-    string queryServerIP = "";
-    string	BROKER_ID = "0077";				// 经纪公司代码
-    string exgTradeFrontIPCSHFE;
-    string exgParticipantIDCSHFE;
-    string exgTraderIDCSHFE;
-    string exgTraderPasswdCSHFE;
-    string exgFlowType;
-    int remoteTradeServerPort = 0;//交易端口
-    int mkdatasrvport = 0;
-    string  PASSWORD = "0";			// 用户密码
-    string LOGIN_ID = "";
-    int notActiveInsertAmount = 1;//不活跃合约重复下单次数
-    int arbVolumeMetric = 0;//套利单总共能下多少手，单边
-    int arbVolume = 0;//当前持仓量
-    int orderInsertInterval = 1000;//下单间隔
-    int maxFollowTimes = 2;//最大追单次数
-    int maxUntradeNums = 3;//最大未成交套利单笔数(非手数，手数=maxUntradeNums*defaultVolume)
-    int biasTickNums = 2;//价格偏移多少个tick进行追单
+    int useReal=0;//test environment
+    string  realTradeFrontAddr ;
+    string	 broker_id = "0077";
+    string	 realBrokerID = "9999";
+    string followUser;
     string _market_front_addr;
     string _trade_front_addr;
-    int followTimes=1;
     string db_host;
     string db_user;
     string db_pwd;

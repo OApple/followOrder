@@ -13,6 +13,9 @@ class NiuTraderSpi:public CThostFtdcTraderSpi
 {
 public:
     NiuTraderSpi();
+
+   NiuTraderSpi(DataInitInstance&di, string &config);
+
     NiuTraderSpi(DataInitInstance&di,string  investorID,string passWord);
 
     NiuTraderSpi( DataInitInstance&di,  bool loginOK,CThostFtdcTraderApi* pUserApi);
@@ -60,6 +63,7 @@ public:
     string getInvestorID() const;
     void setInvestorID(const string &investorID);
 
+
     vector<CTraderSpi *> & getFollow();
     void setFollow(const vector<CTraderSpi *> &follow);
 
@@ -87,9 +91,10 @@ protected:
 private:
     string _trade_front_addr;
     int _requestID=1;
-    bool _all_follow_ok=false;
+    bool _all_follow_ok=true;
     bool _positon_req_send=false;
     bool _loginOK;
+//    unordered_map<string, CTraderSpi*>_follow;
     vector<CTraderSpi *> _follow;
 
     string _brokerID;

@@ -1,5 +1,5 @@
 #include "util.h"
-extern DataInitInstance dii;
+//extern DataInitInstance dii;
 
 
 string strRspInfoField(CThostFtdcRspInfoField *pRspInfo)
