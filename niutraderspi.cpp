@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <boost/locale/encoding.hpp>
@@ -47,19 +48,35 @@ NiuTraderSpi::NiuTraderSpi(DataInitInstance&di, string&config):dii(di)
          _brokerID=dii.realBrokerID;
     }
 
-    string prefix=_investorID+"/"+dii.getTime()+"/";
+    string prefix=_investorID+"/";
     system(("mkdir  -p "+prefix).c_str());
     CThostFtdcTraderApi* pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(prefix.c_str());			// 创建UserApi
     pUserApi->RegisterSpi((CThostFtdcTraderSpi*)this);			// 注册事件类
     pUserApi->SubscribePublicTopic(THOST_TERT_RESUME);					// 注册公有流
     pUserApi->SubscribePrivateTopic(THOST_TERT_RESUME);					// 注册私有流
 
-    pUserApi->RegisterFront("tcp://180.168.146.187:10001");
-    pUserApi->RegisterFront("tcp://218.202.237.33:10002");
+//    pUserApi->RegisterFront("tcp://180.168.146.187:10001");
+//    pUserApi->RegisterFront("tcp://218.202.237.33:10002");
 //    pUserApi->RegisterFront("tcp://180.168.146.187:10030");
       pUserApi->RegisterFront((char*)(_trade_front_addr.c_str()));
 
-    _pUserApi=pUserApi;
+      _pUserApi=pUserApi;
+}
+
+NiuTraderSpi::~NiuTraderSpi()
+{
+    _pUserApi->RegisterSpi(NULL);
+    _pUserApi->Release();
+    // free slave
+    typedef  unordered_map<string, CTraderSpi*>::value_type  cconst_pair;
+    mtx.lock();
+    BOOST_FOREACH(cconst_pair&node,_slaves)
+    {
+        CTraderSpi*ctp=node.second;
+        delete ctp;
+    }
+    _slaves.clear();
+    mtx.unlock();
 }
 
 NiuTraderSpi::NiuTraderSpi(DataInitInstance&di, string investorID, string passWord):dii(di)
@@ -355,71 +372,7 @@ void NiuTraderSpi::ReqQryInvestorPosition()
 }
 
 
-//int NiuTraderSpi::ReqOrderInsert(UserOrderField* userOrderField)
-//{
-//    //CTP
-//    //报单结构体
-//    CThostFtdcInputOrderField req;
-//    memset(&req, 0, sizeof(req));
-//    ///经纪公司代码
-//    strcpy(req.BrokerID, userOrderField->brokerID.c_str());
-//    ///投资者代码
-//    strcpy(req.InvestorID, userOrderField->investorID.c_str());
-//    ///合约代码
-//    strcpy(req.InstrumentID, userOrderField->instrumentID.c_str());
-//    ///报单引用
-//    strcpy(req.OrderRef, lexical_cast<string>(userOrderField->orderRef).c_str());
-//    req.RequestID = userOrderField->requestID;
-//    ///用户代码
 
-//    ///报单价格条件: 限价
-//    req.OrderPriceType  = userOrderField->orderPriceType.c_str()[0];
-
-//    ///买卖方向:
-//    req.Direction=userOrderField->direction.c_str()[0];
-//    ///组合开平标志: 开仓
-//    req.CombOffsetFlag[0]=userOrderField->offsetFlag.c_str()[0];
-
-//    ///组合投机套保标志
-//    req.CombHedgeFlag[0]=userOrderField->hedgeFlag.c_str()[0];
-
-//    ///价格
-//    req.LimitPrice = userOrderField->orderInsertPrice;
-
-//    ///数量: 1
-//    req.VolumeTotalOriginal = userOrderField->volume;
-//    ///有效期类型: 当日有效
-//    req.TimeCondition = THOST_FTDC_TC_GFD;
-//    ///GTD日期
-//    //	TThostFtdcDateType	GTDDate;
-//    ///成交量类型: 任何数量
-//    req.VolumeCondition = THOST_FTDC_VC_AV;
-//    ///最小成交量: 1
-//    req.MinVolume = 1;
-//    ///触发条件: 立即
-//    req.ContingentCondition = THOST_FTDC_CC_Immediately;
-//    ///止损价
-//    //	TThostFtdcPriceType	StopPrice;
-//    ///强平原因: 非强平
-//    req.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
-//    ///自动挂起标志: 否
-//    req.IsAutoSuspend = 0;
-//    ///业务单元
-//    ///请求编号
-
-//    ///用户强评标志: 否
-//    req.UserForceClose = 0;
-
-//    int iResult =_pUserApi->ReqOrderInsert(&req,iRequestID++);
-//    cerr << "--->>> ReqOrderInsert:investorID=" <<userOrderField->investorID<< ((iResult == 0) ? "success" : "failed") << endl;
-
-//    string orderinsertstr = strInputOrderField(&req);
-//    string tmp=((iResult == 0) ? "success" : "failed");
-//    string msg="ReqOrderInsert:--->>> ReqOrderInsert: " + tmp+";"+orderinsertstr;
-//    cout <<msg;
-//    return iResult;
-
-//}
 
 void NiuTraderSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInvestorPosition, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
@@ -513,34 +466,36 @@ void NiuTraderSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pIn
 void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 {
     //    return ;// test
-    //get config from redis
-//     dii.followUser=dii.redis_con.get("followUser");
     UpdateThread&upt= UpdateThread::GetInstance();
-    upt.setUpdate();
-    typedef  CTraderSpi*tmacc;
+    upt.notify();
+//    typedef  CTraderSpi*const_pair;
+    typedef  unordered_map<string, CTraderSpi*>::value_type  const_pair;
     LOG(WARNING) << "--->>>OnRtnOrder  InvestorID="<<pOrder->InvestorID<<"status=" <<pOrder->OrderStatus<< endl;
     string tmpstr = strOrderField(pOrder);
     LOG(WARNING) << (lexical_cast<string>(this)+"----->>>OnRtnOrder:" + tmpstr);
-    if(!_all_follow_ok)
-    {
-        BOOST_FOREACH(tmacc&node,_follow)
-        {
-            //        cout<<"follow users="<<node->investorID<<endl;
-            if(!node->GetLoginOK())
-            {
-                LOG(WARNING) <<(lexical_cast<string>(node))<<"is not ok";
-                return;
-            }
-        }
-        LOG(WARNING) <<"all follow ok";
-        _all_follow_ok=true;
-    }
+
+//    if(!_all_follow_ok)
+//    {
+//        BOOST_FOREACH(const_pair&node,_slaves)
+//        {
+//            //        cout<<"follow users="<<node->investorID<<endl;
+//            if(!(node.second)->GetLoginOK())
+//            {
+//                LOG(WARNING) <<(lexical_cast<string>(node.second))<<"is not ok";
+//                return;
+//            }
+//        }
+//        LOG(WARNING) <<"all follow ok";
+//        _all_follow_ok=true;
+//    }
+
     if((pOrder->OrderStatus == '0')||(pOrder->OrderStatus == '1')||(pOrder->OrderStatus == '2'))
     {
         //modify status
-        BOOST_FOREACH(tmacc&node,_follow)
+        mtx.lock();
+        BOOST_FOREACH(const_pair&node,_slaves)
         {
-            string key=GetKey(pOrder,node);
+            string key=GetKey(pOrder,node.second);
             ChkThread &ct=  ChkThread::GetInstance();
             UserOrderField*uof=ct.get_Nuser_order(key);
             if((uof!=NULL)&&(uof->GetStatus()=='3'))
@@ -555,7 +510,7 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
             }
             if(uof==NULL)// no into queue and trade directly
             {
-                UserOrderField* uof = UserOrderField::CreateUserOrderField(pOrder,node);
+                UserOrderField* uof = UserOrderField::CreateUserOrderField(pOrder,node.second);
                 uof->SetStatus('r');
                 cout<<"ReqOrderInsert"<<endl;
                 int ret= uof->ReqOrderInsert();
@@ -568,14 +523,16 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
                 continue ;
             }
         }
+        mtx.unlock();
     }
 
 
     if(pOrder->OrderStatus == '3')
     {
-        BOOST_FOREACH(tmacc&node,_follow)
+        mtx.lock();
+        BOOST_FOREACH(const_pair&node,_slaves)
         {
-            string key=GetKey(pOrder,node);
+            string key=GetKey(pOrder,node.second);
             ChkThread&ct=  ChkThread::GetInstance();
             UserOrderField*uof=ct.get_Nuser_order(key);
             int len=strlen(pOrder->ActiveUserID);
@@ -583,7 +540,7 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
             {
                 continue;
             }
-            uof = UserOrderField::CreateUserOrderField(pOrder,node);
+            uof = UserOrderField::CreateUserOrderField(pOrder,node.second);
             uof->SetStatus('3');
             cout<<"ReqOrderInsert22"<<endl;
             int ret= uof->ReqOrderInsert();
@@ -600,19 +557,21 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
             }
             continue ;
         }
+        mtx.unlock();
     }
 
     if(pOrder->OrderStatus == '4')
     {
-        BOOST_FOREACH(tmacc&node,_follow)
+        BOOST_FOREACH(const_pair&node,_slaves)
         {}
     }
 
     if(pOrder->OrderStatus == '5')
     {
-        BOOST_FOREACH(tmacc&node,_follow)
+        mtx.lock();
+        BOOST_FOREACH(const_pair&node,_slaves)
         {
-            string key=GetKey(pOrder,node);
+            string key=GetKey(pOrder,node.second);
             ChkThread&ct=  ChkThread::GetInstance();
             UserOrderField*uof=ct.get_Nuser_order(key);
             if(uof!=NULL)
@@ -623,6 +582,7 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 
             }
         }
+        mtx.unlock();
     }
 
     if(pOrder->OrderStatus == 'a')
@@ -635,13 +595,13 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 
     if(pOrder->OrderStatus == 'b')
     {
-        BOOST_FOREACH(tmacc&node,_follow)
+        BOOST_FOREACH(const_pair&node,_slaves)
         {}
     }
 
     if(pOrder->OrderStatus == 'c')
     {
-        BOOST_FOREACH(tmacc&node,_follow)
+        BOOST_FOREACH(const_pair&node,_slaves)
         {}
     }
 
@@ -671,59 +631,6 @@ void NiuTraderSpi::OnRtnTrade(CThostFtdcTradeField *pTrade)
 
     ReqQryInvestorPosition();
     return;//test
-    //    typedef  UserAccountInfo*tmacc;
-    //    vector<UserAccountInfo*>followUser=_ba->follow;
-    //    BOOST_FOREACH(tmacc&node,followUser)
-    //    {
-    //        vector<string> tmp;
-    //        split(tmp,node->ratio,is_any_of(":"));
-    //        int n1=lexical_cast<int>(tmp[1]);
-    //        int n2=lexical_cast<int>(tmp[0]);
-    //        int totalVolume=(pTrade->Volume*n1/n2);
-    //        UserOrderField* userOrderField = new UserOrderField();
-    //        userOrderField->brokerID=dii.BROKER_ID;
-    //        userOrderField->direction=pTrade->Direction;
-    //        userOrderField->frontID=node->frontID;
-    //        userOrderField->sessionID=node->sessionID;
-    //        userOrderField->hedgeFlag=node->hedgeFlag;
-    //        userOrderField->instrumentID=pTrade->InstrumentID;
-    //        userOrderField->investorID=node->investorID;
-    //        userOrderField->offsetFlag=pTrade->OffsetFlag;
-    //        if(node->priceType==1)// nman price
-    //        {
-    //            userOrderField->orderInsertPrice=pTrade->Price;
-    //            userOrderField->orderPriceType="2";
-    //        }
-    //        if(node->priceType==2)//market price
-    //        {
-    //            userOrderField->orderInsertPrice=0;
-    //            userOrderField->orderPriceType="4";
-    //        }
-
-    //        userOrderField->orderRef=node->orderRef++;
-    //        userOrderField->volume=totalVolume;
-    ////        userOrderField->send_time=time(NULL);
-    //         userOrderField->_pTraderSpi=node->pUserSpi;
-    //          userOrderField->_pUserApi=node->pUserApi;
-    //         CTraderSpi*pTraderSpi =( CTraderSpi*)userOrderField->_pTraderSpi;
-    //        int ret=pTraderSpi->ReqOrderInsert(userOrderField);
-
-    //      ChkThread*ct=  ChkThread::GetInstance();
-
-    //        //add to map for check
-    //      if(ret==0)
-    //        ct->putOrder(userOrderField);
-    //      else
-    //      {
-    //          delete userOrderField;
-    //      }
-    //      return ;
-    //    }
-
-    //todo modify position
-    //ReqQryInvestorPosition(brokerID,investorID);
-    //    LOG(INFO) << ("--->>>OnRtnTrade:" + tmpstr);
-    //    dii.deleteOriOrder(boost::lexical_cast<string>(pTrade->OrderSysID));
 
 }
 string NiuTraderSpi::getInvestorID() const
@@ -748,14 +655,64 @@ void NiuTraderSpi::setPassword(const string &value)
 
 
 
-vector<CTraderSpi *> & NiuTraderSpi::getFollow()
+unordered_map<string, CTraderSpi*> & NiuTraderSpi::getSlave()
 {
-    return _follow;
+    return _slaves;
 }
 
-void NiuTraderSpi::setFollow(const vector<CTraderSpi *> &follow)
+void NiuTraderSpi::setSlave( unordered_map<string, CTraderSpi*>slaves)
 {
-    _follow = follow;
+//    _follow = follow;
+    mtx.lock();
+    _slaves=slaves;
+    mtx.unlock();
+}
+
+void NiuTraderSpi::addUser(string & config)
+{
+     CTraderSpi*ctp=new CTraderSpi(dii,config);
+    //lock
+     mtx.lock();
+    _slaves[ctp->investorID()]=ctp;
+    mtx.unlock();
+    //unlock
+
+   //start
+    ctp->startApi();
+}
+
+void NiuTraderSpi::delUser(string investorid)
+{
+    //lock
+    mtx.lock();
+    auto it=_slaves.find(investorid);
+    _slaves.erase(investorid);
+    mtx.unlock();
+    //unlock
+    CTraderSpi *ctp=it->second;
+    delete ctp;
+}
+
+void NiuTraderSpi::setSlaveConfig(const string &slave, const string &config)
+{
+    mtx.lock();
+ CTraderSpi *ctp=_slaves[slave];
+ mtx.unlock();
+ ctp->setConfig(config);
+}
+
+unordered_map<string, string> NiuTraderSpi::getSlaveConfig()
+{
+       unordered_map<string, string > old_config_map;
+    typedef  unordered_map<string, CTraderSpi*>::value_type  cconst_pair;
+       mtx.lock();
+    BOOST_FOREACH(cconst_pair&node,_slaves)
+    {
+        CTraderSpi*ctp=node.second;
+        old_config_map[node.first]=ctp->config();
+    }
+    mtx.unlock();
+    return old_config_map;
 }
 int NiuTraderSpi::total_trade_num() const
 {
@@ -813,8 +770,21 @@ void NiuTraderSpi::setLoss_num(int loss_num)
 }
 
 
+void NiuTraderSpi::setFollows(const unordered_map<string, CTraderSpi *> &follows)
+{
+    mtx.lock();
+    _slaves = follows;
+    mtx.unlock();
+}
 
 
+
+
+void NiuTraderSpi::stopApi()
+{
+    _pUserApi->RegisterSpi(NULL);
+    _pUserApi->Release();
+}
 
 
 
@@ -822,6 +792,13 @@ void NiuTraderSpi::setLoss_num(int loss_num)
 
 void  NiuTraderSpi::startApi()
 {
+    typedef  unordered_map<string, CTraderSpi*>::value_type  cconst_pair;
+    mtx.lock();
+    BOOST_FOREACH(cconst_pair&node,_slaves)
+    {
+        (node.second)->startApi();
+    }
+mtx.unlock();
     _pUserApi->Init();
 }
 

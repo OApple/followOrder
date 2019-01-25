@@ -47,12 +47,12 @@ public:
     /************************************************************************/
     /* 初始化参数列表                                                                     */
     /************************************************************************/
-    void initTradeApi();
+    void startTradeApi();
 
     void GetConfigFromFile();
     void GetConfigFromRedis();
     void DataInit();
-    void insert_follow_user(string users, vector<CTraderSpi *> &vac);
+    unordered_map<string, CTraderSpi *> makeSlaves(string users, vector<CTraderSpi *> &vac);
     string getTime();
 
 
@@ -64,15 +64,20 @@ public:
     void saveCThostFtdcTradingAccountFieldToDb(CThostFtdcTradingAccountField *pTradingAccount);
     void  saveSettlementToDB(NiuTraderSpi &TraderSpi);
     void saveSettlementToDB(CTraderSpi &TraderSpi);
+
+
     vector<string> getInstrumentIDZH(string InstrumentID);
     double getPriceTick(string InstrumentID);
     string getHeyueName(string str);
     int getInstrumentMulti(string InstrumentID);
-    //UserAccount* getTradeAccount(string);
-    //void setUserAccount(UserAccount* ua);
 
-    unordered_map<string, CTraderSpi*> followNBAccountMap;
-    unordered_map<string, NiuTraderSpi*> NBAccountMap;
+    void addMaster(vector<string>&slave_master);
+    void delMaster(const string &master);
+    void startMaster(const string &master);
+    NiuTraderSpi *getMaster(const string &master);
+    set<string>  getMaster();
+//    unordered_map<string, CTraderSpi*> followNBAccountMap;
+    unordered_map<string, NiuTraderSpi*> masterAccountMap;
 
 
     //property config
@@ -80,7 +85,7 @@ public:
     string  realTradeFrontAddr ;
     string	 broker_id = "0077";
     string	 realBrokerID = "9999";
-    string followUser;
+    string slaveMasters;
     string _market_front_addr;
     string _trade_front_addr;
     string db_host;

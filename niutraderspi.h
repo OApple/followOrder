@@ -13,7 +13,7 @@ class NiuTraderSpi:public CThostFtdcTraderSpi
 {
 public:
     NiuTraderSpi();
-
+    ~ NiuTraderSpi();
    NiuTraderSpi(DataInitInstance&di, string &config);
 
     NiuTraderSpi(DataInitInstance&di,string  investorID,string passWord);
@@ -52,11 +52,11 @@ public:
     virtual void OnRtnTrade(CThostFtdcTradeField *pTrade);
 
     void startApi();
+
+    void stopApi();
     //    int ReqOrderInsert(UserOrderField* userOrderField);
 
-    CThostFtdcTraderSpi* pUserSpi ;
 
-    CThostFtdcTraderApi* _pUserApi;
     string getPassword() const;
     void setPassword(const string &value);
 
@@ -64,9 +64,13 @@ public:
     void setInvestorID(const string &investorID);
 
 
-    vector<CTraderSpi *> & getFollow();
-    void setFollow(const vector<CTraderSpi *> &follow);
+    unordered_map<string, CTraderSpi *> &getSlave();
+    void setSlave(unordered_map<string, CTraderSpi *> slaves);
 
+    void addUser(string &config);
+    void delUser(string investorid);
+    void setSlaveConfig(const string &slave, const string &config);
+    unordered_map<string, string>getSlaveConfig();
     int total_trade_num() const;
     void setTotal_trade_num(int total_trade_num);
 
@@ -85,6 +89,14 @@ public:
     int loss_num() const;
     void setLoss_num(int loss_num);
 
+
+    void setFollows(const unordered_map<string, CTraderSpi *> &follows);
+
+
+    CThostFtdcTraderSpi* pUserSpi ;
+
+    CThostFtdcTraderApi* _pUserApi;
+
 protected:
 
 
@@ -94,8 +106,9 @@ private:
     bool _all_follow_ok=true;
     bool _positon_req_send=false;
     bool _loginOK;
-//    unordered_map<string, CTraderSpi*>_follow;
-    vector<CTraderSpi *> _follow;
+    std::mutex mtx;
+    unordered_map<string, CTraderSpi*>_slaves;
+//    vector<CTraderSpi *> _follow;
 
     string _brokerID;
     string  _investorID="";

@@ -9,41 +9,45 @@ using boost::algorithm::trim_copy;
 UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder,CTraderSpi*uai)
 {
 
+    vector<string>parameter;
+    parameter=uai->getParameter();
     vector<string> tmp;
-    split(tmp,uai->ratio,is_any_of(":"));
+    split(tmp,parameter[0],is_any_of(":"));
     double n1=lexical_cast<double>(tmp[1]);
     double n2=lexical_cast<int>(tmp[0]);
     double totalVolume=(pOrder->VolumeTotalOriginal*n1/n2);
     if(totalVolume<1)
         totalVolume=1;
     UserOrderField* userOrderField = new UserOrderField();
-    userOrderField->brokerID=uai->_brokerID;
+    userOrderField->brokerID=uai->brokerID();
     userOrderField->_direction=pOrder->Direction;
     userOrderField->NOrderSysID=trim_copy(string(pOrder->OrderSysID));
     userOrderField->NinvestorID=pOrder->InvestorID;
-    userOrderField->_frontID=uai->frontID;
-    userOrderField->_sessionID=uai->sessionID;
+    userOrderField->_frontID=uai->frontID();
+    userOrderField->_sessionID=uai->sessionID();
     userOrderField->_hedge_flag=pOrder->CombHedgeFlag;
     userOrderField->_instrumentID=pOrder->InstrumentID;
     userOrderField->_investorID=uai->investorID();
-    userOrderField->_tick=uai->followTick;
+    userOrderField->_tick=lexical_cast<int>(parameter[2]);
     userOrderField->_price_tick=DataInitInstance::GetInstance().getPriceTick(pOrder->InstrumentID);
     userOrderField->_offset_flag=lexical_cast<string>(pOrder->CombOffsetFlag);
-    if(uai->priceType==1)// nman price
+    int pricetype=lexical_cast<int>(parameter[1]);
+    if(pricetype==1)// nman price
     {
         userOrderField->_price=pOrder->LimitPrice;
         userOrderField->orderPriceType="2";
     }
-    if(uai->priceType==2)//market price
+    if(pricetype==2)//market price
     {
         userOrderField->_price=0;
         userOrderField->orderPriceType="1";
     }
 
-    userOrderField->_order_ref=uai->orderRef++;
+    userOrderField->_order_ref=uai->orderRefInc();
+//    uai->setOrderRef(userOrderField->_order_ref+1);
     userOrderField->_volume=totalVolume;
     userOrderField->_pTraderSpi=uai;
-    userOrderField->_pUserApi=uai->pUserApi;
+//    userOrderField->_pUserApi=uai->pUserApi;
     userOrderField->_status='z';
     userOrderField->_key=userOrderField->NinvestorID+userOrderField->NOrderSysID+userOrderField->_investorID;
     userOrderField->_key2=lexical_cast<string>(userOrderField->_investorID)+lexical_cast<string>(userOrderField->_order_ref);
@@ -55,8 +59,6 @@ int  UserOrderField:: ReqOrderInsert()
     CTraderSpi* pTraderSpi= (CTraderSpi*)  _pTraderSpi;
     int ret=pTraderSpi->ReqOrderInsert(this);
     return ret;
-    //    ChkThread*ct=  ChkThread::GetInstance();
-
 }
 
 int UserOrderField:: ReqOrderAction()
@@ -78,7 +80,7 @@ char UserOrderField::GetStatus()
 int UserOrderField:: UpdateRef()
 {
     CTraderSpi* pTraderSpi= (CTraderSpi*) _pTraderSpi;
-    _order_ref=pTraderSpi->orderRef++;
+    _order_ref=pTraderSpi->orderRefInc();
     _key2=lexical_cast<string>(_investorID)+lexical_cast<string>(_order_ref);
 
 }

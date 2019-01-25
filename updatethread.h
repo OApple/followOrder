@@ -11,6 +11,7 @@
 #include <mutex>
 #include <time.h>
 #include <pthread.h>
+#include <condition_variable>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <boost/bind.hpp>
@@ -29,8 +30,9 @@ class UpdateThread
 {
 private:
     std::mutex mtx;
-     string followUser;
-     bool updateFlag;
+    string slaveMasters;
+    bool updateFlag;
+    std::condition_variable cv;
     std::thread chkThread;
     UpdateThread(){}
     void run();
@@ -41,8 +43,8 @@ public:
         return Instance;
     }
 
-  void  start();
-  void setUpdate();
+    void  start();
+    void notify();
 };
 
 #endif // UPDATETHREAD_H

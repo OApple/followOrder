@@ -16,7 +16,8 @@ public:
 
     CTraderSpi( DataInitInstance&di,  bool loginOK,CThostFtdcTraderApi* pUserApi);
 
-//126373/123456/1:1/1/1
+    ~CTraderSpi();
+    //126373/123456/1:1/1/1
     CTraderSpi(DataInitInstance&di, string &config);
 
     CTraderSpi();
@@ -87,35 +88,19 @@ public:
     bool GetLoginOK();
     void SetLoginOK();
 
-    ///报单操作请求
-    //    void ReqOrderActionTwo(CThostFtdcInputOrderActionField *req,CThostFtdcTraderApi* pUserApi);
-    ///撤单报单组装
-    CThostFtdcOrderField AssambleOrderAction(list<string> orderAction);
-    ///撤单报单组装
-    CThostFtdcOrderField AssambleOrderActionTwo(list<string> orderAction);
+
     ///请求查询合约
     //    void ReqQryInstrument();
 
     //    void update_followusers( unordered_map<string, UserAccountInfo*> followusers);
 
+    void  startApi();
+    void stopApi();
 
 
-    string password="";
-    //    string hedgeFlag="1";
-    string _trade_front_addr="0";
-    CThostFtdcTraderApi* pUserApi ;
-
-    string _brokerID;
-    int frontID;
-    int sessionID;
-     int orderRef;
 
 
-    string ratio;
-    int followTick=1;
-    char priceType;
 
-    CThostFtdcTraderApi* _pUserApi;
     int total_trade_num() const;
     void setTotal_trade_num(int total_trade_num);
 
@@ -137,23 +122,47 @@ public:
     string investorID() const;
     void setInvestorID(const string &investorID);
 
-protected:
-    string _settlemsg;
-    //    boost::recursive_mutex _spi_mtx;
-    bool _loginOK;
-    //    CThostFtdcTraderSpi* _pUserSpi;
+    string config() const;
+    void setConfig(const string &config);
 
-    int iRequestID=1;
-    //    UserAccountInfo*_ba;
-    DataInitInstance &dii;
+    vector<string> getParameter();
 
-    bool _positon_req_send=false;
-    bool isTradeDefFieldReady = false;
-    SQLite::Database *sqlite_handle;
+
+    int sessionID() const;
+    void setSessionID(int sessionID);
+
+    int orderRefInc() ;
+    void setOrderRef(int orderRef);
+
+    int frontID() const;
+    void setFrontID(int frontID);
+
+    string brokerID() const;
+    void setBrokerID(const string &brokerID);
 
 private:
 
+    std::mutex mtx;
+    string ratio;
+    string followTick="1";
+    string priceType;
+
+    string _settlemsg;
+    //    boost::recursive_mutex _spi_mtx;
+    bool _loginOK;
+    CThostFtdcTraderApi* _pUserApi;
+    DataInitInstance &dii;
+
+    bool _positon_req_send=false;
+    SQLite::Database *sqlite_handle;
     string  _investorID="";
+    string _password="";
+    string _trade_front_addr="0";
+    string _brokerID;
+
+    int _frontID;
+    int _sessionID;
+    int _orderRef;
 
     int _total_trade_num;
 
@@ -165,7 +174,8 @@ private:
 
     int _loss_num;
 
-
+    string _config;
+    int _requestID=1;
     ///用户登录请求
     void ReqUserLogin();
 
@@ -194,7 +204,6 @@ private:
     // 是否正在交易的报单
     bool IsTradingOrder(CThostFtdcOrderField *pOrder);
 
-    void storeInvestorTrade(CThostFtdcTradeField *pTrade);
     //初始化持仓信息
     HoldPositionInfo* initpst(CThostFtdcInvestorPositionField *pInvestorPosition);
     void SaveTransactionRecord();

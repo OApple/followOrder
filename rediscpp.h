@@ -65,7 +65,14 @@ public:
         freeReplyObject(this->_reply);
         return str;
     }
-
+  std::string getConfig()
+  {
+      std::string key="followUser";
+      this->_reply = (redisReply*)redisCommand(this->_connect, "GET %s", key.c_str());
+      std::string str = this->_reply->str;
+      freeReplyObject(this->_reply);
+      return str;
+  }
     void set(std::string key, std::string value)
     {
         redisCommand(this->_connect, "SET %s %s", key.c_str(), value.c_str());

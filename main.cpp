@@ -30,10 +30,11 @@ int main(int argc, char**argv)
     ct.start();
     UpdateThread&ut=UpdateThread::GetInstance();
     ut.start();
-    dii.initTradeApi();
+    dii.startTradeApi();
 
     while(1){
         sleep(2);
+//        ut.notify();
     }
     google::ShutdownGoogleLogging();
     return 0;

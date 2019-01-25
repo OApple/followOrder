@@ -37,16 +37,23 @@ DataInitInstance::~DataInitInstance(void)
 
 
 //user=126373/123456/1:1/1/1,122467/lhh520/1:5/2/2
-void DataInitInstance::insert_follow_user(string users,vector<CTraderSpi*>& vac)
+ unordered_map<string, CTraderSpi*> DataInitInstance::makeSlaves(string users,vector<CTraderSpi*>& vac)
 {
     string spreadList = users;
     vector<string> tmp_splists ;
-    boost::split(tmp_splists,spreadList,boost::is_any_of(","));//
+
+     unordered_map<string, CTraderSpi*>tmp;
+    split(tmp_splists,spreadList,is_any_of(","));//
     for (unsigned int i = 0; i < tmp_splists.size();i++) {//num follow user
         CTraderSpi* ba=new CTraderSpi(*this,tmp_splists[i]);
-        vac.push_back(ba);
-    }
 
+        vector<string>user_config;
+        split(user_config,tmp_splists[i],boost::is_any_of("/"));//
+
+        vac.push_back(ba);
+        tmp[user_config[0]]=ba;
+    }
+return tmp;
 }
 
 void DataInitInstance::GetConfigFromFile(){
@@ -120,32 +127,30 @@ void DataInitInstance:: GetConfigFromRedis()
 {
     redis_con=Redis(redis_host,redis_port,redis_pwd);
     redis_con.connect();
-    followUser=redis_con.get("followUser");
+    slaveMasters=redis_con.getConfig();
 
-    LOG(ERROR) <<"redis followuser="<<followUser<<endl;
-    vector<string> user_nman;
-    boost::split(user_nman,followUser,boost::is_any_of("&"));//user~nman&user~nman
-    int cnt_num=user_nman.size();
+    LOG(ERROR) <<"redis followuser="<<slaveMasters<<endl;
+    vector<string> vslaveMaster;
+    boost::split(vslaveMaster,slaveMasters,boost::is_any_of("&"));//user~nman&user~nman
+    int cnt_num=vslaveMaster.size();
     for(unsigned int i = 0; i <cnt_num ;i++)
     {
-        vector<string> tmp;
-        boost::split(tmp,user_nman[i],boost::is_any_of("~"));//user~nman  tmp[0]=126373/123456/1:1/1/1,122467/lhh520/1:5/2/2   tmp[1]=5555/78899
+        vector<string> slaveMaster;
+        boost::split(slaveMaster,vslaveMaster[i],boost::is_any_of("~"));//user~nman  tmp[0]=126373/123456/1:1/1/1,122467/lhh520/1:5/2/2   tmp[1]=5555/78899
 
-        vector<CTraderSpi*> vac;
-        insert_follow_user(tmp[0],vac);
+        vector<CTraderSpi*> vSlave;
+     unordered_map<string, CTraderSpi*>mSlave =  makeSlaves(slaveMaster[0],vSlave);
 
 
-        NiuTraderSpi* ba=new NiuTraderSpi(*this,tmp[1]);
-        ba->setFollow(vac);
-        auto it_map_strs = NBAccountMap.find(ba->getInvestorID());
-        if (it_map_strs == NBAccountMap.end())
-        {
-            NBAccountMap[ba->getInvestorID()] = ba;
-        }
-        else
-        {//update
-
-        }
+        NiuTraderSpi* ba=new NiuTraderSpi(*this,slaveMaster[1]);
+        ba->setSlave(mSlave);
+          masterAccountMap[ba->getInvestorID()] = ba;
+//    CTraderSpi*tmacc;
+   typedef  unordered_map<string, CTraderSpi*>::value_type  const_pair;
+            BOOST_FOREACH(const_pair&node,mSlave)
+            {
+               cout<<"follow users="<<node.first<<endl;
+            }
     }
 
 
@@ -158,17 +163,17 @@ void DataInitInstance::DataInit()
 
     mysqlpp::ScopedConnection con(*mysql_pool, true);
 
-    mysqlpp::Query query = con->query("delete from ctp_investor_position");
-    try
-    {
-        query.execute();
-        query.execute("commit");
-    }
-    catch (const mysqlpp::Exception& er)
-    {
-        LOG(ERROR) << "exec error: " << er.what() << endl;
-        query.execute("commit");
-    }
+//    mysqlpp::Query query = con->query("delete from ctp_investor_position");
+//    try
+//    {
+//        query.execute();
+//        query.execute("commit");
+//    }
+//    catch (const mysqlpp::Exception& er)
+//    {
+//        LOG(ERROR) << "exec error: " << er.what() << endl;
+//        query.execute("commit");
+//    }
 }
 
 
@@ -281,43 +286,49 @@ void DataInitInstance::saveThostFtdcInvestorPositionFieldToDb(CThostFtdcInvestor
     positonsql.append(pInvestorPosition->BrokerID)  ;positonsql.append("','");
     positonsql.append(pInvestorPosition->InvestorID)  ;positonsql.append("',");
     positonsql.push_back(pInvestorPosition->PosiDirection);positonsql.append(",");
+
     positonsql.push_back(pInvestorPosition->HedgeFlag); positonsql.append(",");
     positonsql.push_back(pInvestorPosition->PositionDate);positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->Position))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->YdPosition))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->LongFrozen))  ;positonsql.append(",");
+
     positonsql.append(lexical_cast<string>(pInvestorPosition->ShortFrozen))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->LongFrozenAmount))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->ShortFrozenAmount))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->OpenVolume))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->CloseVolume))  ;positonsql.append(",");
+
     positonsql.append(lexical_cast<string>(pInvestorPosition->OpenAmount))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->CloseAmount))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->PositionCost))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->PreMargin))  ;positonsql.append(",");
-//    string tmp=lexical_cast<string>(pInvestorPosition->UseMargin);
     positonsql.append(lexical_cast<string>(pInvestorPosition->UseMargin))  ;positonsql.append(",");
+
     positonsql.append(lexical_cast<string>(pInvestorPosition->FrozenMargin))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->FrozenCash))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->FrozenCommission))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->CashIn))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->Commission))  ;positonsql.append(",");
+
     positonsql.append(lexical_cast<string>(pInvestorPosition->CloseProfit))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->PositionProfit))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->PreSettlementPrice))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->SettlementPrice))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->TradingDay))  ;positonsql.append(",");
+
     positonsql.append(lexical_cast<string>(pInvestorPosition->SettlementID))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->OpenCost))  ;positonsql.append(",");
-//    tmp=lexical_cast<string>(pInvestorPosition->ExchangeMargin);
     positonsql.append(lexical_cast<string>(pInvestorPosition->ExchangeMargin))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->CombPosition))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->CombLongFrozen))  ;positonsql.append(",");
+
     positonsql.append(lexical_cast<string>(pInvestorPosition->CombShortFrozen))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->CloseProfitByDate))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->CloseProfitByTrade))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->TodayPosition))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->MarginRateByMoney))  ;positonsql.append(",");
+
     positonsql.append(lexical_cast<string>(pInvestorPosition->MarginRateByVolume))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->StrikeFrozen))  ;positonsql.append(",");
     positonsql.append(lexical_cast<string>(pInvestorPosition->AbandonFrozen));positonsql.append(",");
@@ -327,7 +338,7 @@ void DataInitInstance::saveThostFtdcInvestorPositionFieldToDb(CThostFtdcInvestor
      open_price=pInvestorPosition->OpenCost/(muli*pInvestorPosition->Position);
      positonsql.append(lexical_cast<string>(open_price)); positonsql.append(");");
     //    positonsql.append(boost::lexical_cast<string>(pInvestorPosition->OpenPrice))
-    //   LOG(ERROR) <<"position sql="<<positonsql<<endl;
+//       LOG(ERROR) <<"position sql="<<positonsql<<endl;
     try
     {
         query.execute(positonsql);
@@ -427,7 +438,10 @@ void DataInitInstance::saveThostFtdcTradeFieldToDb(CThostFtdcTradeField *pTrade)
 
         row.tradedatetime = mysqlpp::DateTime(time(NULL));
         row.tradeid=boost::algorithm::trim_copy(std::string(pTrade->OrderSysID));
-        row.tradedatetime_ctp=mysqlpp::DateTime(time(NULL));
+        //    tradedatetime_ctp=mysqlpp::DateTime(time(NULL));
+        string datetime=string(pTrade->TradeDate)+" "+pTrade->TradeTime;
+//        cout<<tradedatetime_ctp<<endl;
+        row.tradedatetime_ctp=mysqlpp::DateTime(datetime);
         row.feedback="交易成功";
     }catch (const mysqlpp::BadQuery& er)
     {
@@ -791,7 +805,7 @@ int DataInitInstance::getInstrumentMulti(string InstrumentID)
     else if("FB"==productid) return 500;
     else if("I"==productid) return 100;
     else if("J"==productid) return 100;
-    else if("JD"==productid) return 5;
+    else if("JD"==productid) return 10;
     else if("JM"==productid) return 60;
     else if("L"==productid) return 5;
     else if("M"==productid) return 10;
@@ -841,6 +855,47 @@ int DataInitInstance::getInstrumentMulti(string InstrumentID)
     else if("EG"==productid) return 10;
     else if("SC"==productid) return 1000;
     else return 1;
+}
+
+void DataInitInstance::addMaster(vector<string> &slave_master)
+{
+    vector<CTraderSpi*> vac;
+    unordered_map<string, CTraderSpi*>mSlaves =  makeSlaves(slave_master[0],vac);
+    NiuTraderSpi* ba=new NiuTraderSpi(*this,slave_master[1]);
+    ba->setSlave(mSlaves);
+    masterAccountMap[ba->getInvestorID()] = ba;
+    ba->startApi();
+}
+
+void DataInitInstance::delMaster(const string &master)
+{
+    auto it=masterAccountMap.find(master);
+    masterAccountMap.erase(master);
+    NiuTraderSpi *ntp=it->second;
+      delete ntp;
+}
+
+void DataInitInstance::startMaster(const string &master)
+{
+    auto it = masterAccountMap.find(master);
+     if (it != masterAccountMap.end())
+         it->second->startApi();
+}
+
+NiuTraderSpi *DataInitInstance::getMaster(const string &master)
+{
+    auto it = masterAccountMap.find(master);
+     if (it != masterAccountMap.end())
+           return it->second;
+     else
+         return nullptr;
+}
+
+set<string> DataInitInstance::getMaster()
+{
+    set<string>tmp;
+    for(auto&master:masterAccountMap)tmp.insert(master.first);
+    return  tmp;
 }
 
 string DataInitInstance::getHeyueName(string str)
@@ -907,24 +962,24 @@ string DataInitInstance::getHeyueName(string str)
 }
 
 
-void DataInitInstance::initTradeApi()
+void DataInitInstance::startTradeApi()
 {
-    for( unordered_map<string, NiuTraderSpi*>::iterator iter=NBAccountMap.begin();iter!=NBAccountMap.end();iter++ )
+    for( unordered_map<string, NiuTraderSpi*>::iterator iter=masterAccountMap.begin();iter!=masterAccountMap.end();iter++ )
     {
         NiuTraderSpi* ba=iter->second;
-        typedef  CTraderSpi*CTS;
-        BOOST_FOREACH(CTS&cts,ba->getFollow())
-        {
-            cts->_pUserApi->Init();
-        }
-
+//        typedef  CTraderSpi*CTS;
+//        typedef  unordered_map<string, CTraderSpi*>::value_type  cconst_pair;
+//        BOOST_FOREACH(cconst_pair&node,ba->getSlave())
+//        {
+//            (node.second)->startApi();
+//        }
         ba->startApi();
-        CTPInterface *interface=new CTPInterface();
-        interface->pUserApi=ba->_pUserApi;
-        interface->pUserSpi=ba;
-        interface->investorID=ba->getInvestorID();
-        interface->loginOK=false;
-        tradeApiMap[ba->getInvestorID()]=interface;
+//        CTPInterface *interface=new CTPInterface();
+//        interface->pUserApi=ba->_pUserApi;
+//        interface->pUserSpi=ba;
+//        interface->investorID=ba->getInvestorID();
+//        interface->loginOK=false;
+//        tradeApiMap[ba->getInvestorID()]=interface;
     }
 }
 
