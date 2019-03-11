@@ -27,7 +27,7 @@ public:
         m_max_size = max_size;
         conns_in_use_ = 0;
         m_max_idle_time = 24*60*60;
-        std:: cout<<"*******creat pool"<<std::endl;
+//        std:: cout<<"*******creat pool"<<std::endl;
     }
     MysqlConnectPool()
     {

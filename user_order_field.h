@@ -44,6 +44,7 @@ class UserOrderField
 private:
     UserOrderField(){}
     char _status='z';
+    bool _immediate_flag=false;
     char _direction;
     unsigned int _tick;
     string _investorID="";
@@ -57,7 +58,7 @@ private:
     double _price;
     double _price_tick;
     int _volume;
-
+    char _followcnt=0;
     string _key;
     string  _key2;
 public:
@@ -85,6 +86,8 @@ public:
 
     string NOrderSysID;
     string NinvestorID;
+    bool immediate_flag() const;
+    void setImmediate_flag(bool immediate_flag);
 };
 string GetKey(CThostFtdcOrderField *pOrder,CTraderSpi*uai);
 string GetKey2(CThostFtdcOrderField *pOrder);

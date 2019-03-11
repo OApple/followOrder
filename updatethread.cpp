@@ -8,6 +8,7 @@
 #include "updatethread.h"
 #include "dataprocessor.h"
 #include "niutraderspi.h"
+#include "chkthread.h"
 
 using boost::split;
 using boost::is_any_of;
@@ -18,17 +19,22 @@ void UpdateThread::run()
     std::unique_lock<std::mutex> lck(mtx);
     while(true)
     {
-
         cv.wait_for(lck,std::chrono::seconds(10));
-        slaveMasters=dii.redis_con.getConfig();
+        slaveMasters=dii.redis_con.get(dii.redis_key);
+
+        ChkThread& ct= ChkThread::GetInstance();
+        if(ct.haveOrder())
+        {
+            LOG(ERROR)<<"maps have order refuse update";
+            return ;
+        }
         if(slaveMasters==dii.slaveMasters)
         {
-            LOG(ERROR)<<"same" ;
             continue;
         }
         else
         {
-            cout<<"different"<<endl;
+            LOG(ERROR)<<"different"<<endl;
             cout<<slaveMasters<<"<-->\n"<<dii.slaveMasters<<endl;
             vector<string> vslaveMaster;
             set<string> new_master_set;
@@ -39,8 +45,11 @@ void UpdateThread::run()
                 vector<string> slave_master;
                 vector<string> master_config;
                 split(slave_master,node,boost::is_any_of("~"));//user~nman  tmp[0]=126373/123456/1:1/1/1,122467/lhh520/1:5/2/2   tmp[1]=5555/78899
-
+                if(slave_master.size()==0)
+                    continue;
                 split(master_config,slave_master[1],is_any_of("/"));
+                if(master_config.size()==0)
+                    continue;
                 new_master_set.insert(master_config[0]);
 
                 NiuTraderSpi*ntp = dii.getMaster(master_config[0]);
@@ -56,6 +65,8 @@ void UpdateThread::run()
                     {
                         vector<string> user_config;
                         split(user_config,tmp_users[i],is_any_of("/"));//
+                        if(user_config.size()==0)
+                            continue;
                         new_config_map[user_config[0]]=tmp_users[i];
                     }
 

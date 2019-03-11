@@ -25,13 +25,12 @@
 
 #include "mysqlconnectpool.h"
 #include "rediscpp.h"
-//#include "traderspi.h"
 #include "property.h"
-//#include "user_order_field.h"
 
 using namespace std;
 class CTraderSpi;
 class NiuTraderSpi;
+class CMdSpi;
 
 class DataInitInstance{
 private:
@@ -62,6 +61,7 @@ public:
     void saveThostFtdcTradeFieldToDb(CThostFtdcTradeField *pTrade);
     void saveThostFtdcInputOrderFieldToDb(CThostFtdcInputOrderField *pInputOrder, string info);
     void saveCThostFtdcTradingAccountFieldToDb(CThostFtdcTradingAccountField *pTradingAccount);
+     void saveDepthMarketDataToDb(CThostFtdcDepthMarketDataField *pDepthMarketData);
     void  saveSettlementToDB(NiuTraderSpi &TraderSpi);
     void saveSettlementToDB(CTraderSpi &TraderSpi);
 
@@ -76,12 +76,12 @@ public:
     void startMaster(const string &master);
     NiuTraderSpi *getMaster(const string &master);
     set<string>  getMaster();
-//    unordered_map<string, CTraderSpi*> followNBAccountMap;
     unordered_map<string, NiuTraderSpi*> masterAccountMap;
 
 
     //property config
-    int useReal=0;//test environment
+    int MuseReal=0;//test environment
+     int SuseReal=0;//test environment
     string  realTradeFrontAddr ;
     string	 broker_id = "0077";
     string	 realBrokerID = "9999";
@@ -99,6 +99,7 @@ public:
     string redis_host="127.0.0.1";
     string redis_pwd;
     string redis_port="6379";
+    string redis_key;
     Redis redis_con;
     // UserApi对象
     unordered_map<string, CTPInterface*> tradeApiMap;

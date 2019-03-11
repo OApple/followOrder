@@ -6,6 +6,7 @@ typedef HMODULE		T_DLL_HANDLE;
 #include <stdlib.h>
 #include <stdio.h>
 #include <dlfcn.h>
+#include <signal.h>
 #include <algorithm>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -17,6 +18,7 @@ typedef HMODULE		T_DLL_HANDLE;
 #include "property.h"
 #include "traderspi.h"
 #include "niutraderspi.h"
+#include "mdspi.h"
 #include "mysqlconnectpool.h"
 #include"DBtable.h"
 #include "user_order_field.h"
@@ -28,8 +30,6 @@ using boost::is_any_of;
 using boost::algorithm::trim_copy;
 
 using namespace std;
-// 请求编号
-//extern int iRequestID;
 
 DataInitInstance::~DataInitInstance(void)
 {
@@ -38,23 +38,27 @@ DataInitInstance::~DataInitInstance(void)
 
 //user=126373/123456/1:1/1/1,122467/lhh520/1:5/2/2
  unordered_map<string, CTraderSpi*> DataInitInstance::makeSlaves(string users,vector<CTraderSpi*>& vac)
-{
-    string spreadList = users;
-    vector<string> tmp_splists ;
+ {
+     string spreadList = users;
+     vector<string> tmp_splists ;
 
      unordered_map<string, CTraderSpi*>tmp;
-    split(tmp_splists,spreadList,is_any_of(","));//
-    for (unsigned int i = 0; i < tmp_splists.size();i++) {//num follow user
-        CTraderSpi* ba=new CTraderSpi(*this,tmp_splists[i]);
+     split(tmp_splists,spreadList,is_any_of(","));//
+     for (unsigned int i = 0; i < tmp_splists.size();i++) {//num follow user
+         CTraderSpi* ba=new CTraderSpi(*this,tmp_splists[i]);
 
-        vector<string>user_config;
-        split(user_config,tmp_splists[i],boost::is_any_of("/"));//
-
-        vac.push_back(ba);
-        tmp[user_config[0]]=ba;
-    }
-return tmp;
-}
+         vector<string>user_config;
+         split(user_config,tmp_splists[i],boost::is_any_of("/"));//
+         if(user_config.size()!=7)
+         {
+             delete ba;
+             continue;
+         }
+         vac.push_back(ba);
+         tmp[user_config[0]]=ba;
+     }
+     return tmp;
+ }
 
 void DataInitInstance::GetConfigFromFile(){
     std::ifstream myfile("config/global.properties");
@@ -74,10 +78,14 @@ void DataInitInstance::GetConfigFromFile(){
             split(name_value,str, is_any_of("="));
             if(name_value.size()!=2){
                 continue;
-            } else if ("useReal" == name_value[0]) {
-                useReal = lexical_cast<int>(name_value[1]);
+            } else if ("MuseReal" == name_value[0]) {
+                MuseReal = lexical_cast<int>(name_value[1]);
                 //strcpy(BROKER_ID, vec[1].c_str());
             }
+            else if ("SuseReal" == name_value[0]) {
+                            SuseReal = lexical_cast<int>(name_value[1]);
+                            //strcpy(BROKER_ID, vec[1].c_str());
+                        }
             else if ("realTradeFrontAddr" == name_value[0]) {
                 realTradeFrontAddr = name_value[1];
             }
@@ -117,18 +125,47 @@ void DataInitInstance::GetConfigFromFile(){
             else if("redis_pwd"==name_value[0]){
                 redis_pwd=name_value[1];
             }
+            else if("redis_key"==name_value[0]){
+                redis_key=name_value[1];
+            }
         }
     }
 }
 //bool sortfunction (CTraderSpi* i,CTraderSpi* j)
 //{ return (i->investorID()==j->investorID()); }
-
+void server_on_exit(void)
+{
+     DataInitInstance& dii=DataInitInstance::GetInstance();
+      dii.redis_con.set("start","0");
+//      cout<<"ssssssssssss"<<endl;
+}
+void sig_act(int)
+{
+    server_on_exit();
+     raise(SIGKILL);
+//    exit(-1);
+}
 void DataInitInstance:: GetConfigFromRedis()
 {
     redis_con=Redis(redis_host,redis_port,redis_pwd);
     redis_con.connect();
-    slaveMasters=redis_con.getConfig();
-
+    slaveMasters=redis_con.get(redis_key);
+    string key="start";
+      string start=redis_con.get(key);
+      if(start=="1")
+      {
+          cout<<"process is runing"<<endl;
+          raise(SIGKILL);
+          return ;
+      }
+      else
+      {
+//        atexit(server_on_exit);
+         signal(SIGINT,  sig_act);
+          signal(SIGTERM,  sig_act);
+          redis_con.set("start","1");
+      }
+//slaveMasters=redis_con.getConfig();
     LOG(ERROR) <<"redis followuser="<<slaveMasters<<endl;
     vector<string> vslaveMaster;
     boost::split(vslaveMaster,slaveMasters,boost::is_any_of("&"));//user~nman&user~nman
@@ -138,21 +175,36 @@ void DataInitInstance:: GetConfigFromRedis()
         vector<string> slaveMaster;
         boost::split(slaveMaster,vslaveMaster[i],boost::is_any_of("~"));//user~nman  tmp[0]=126373/123456/1:1/1/1,122467/lhh520/1:5/2/2   tmp[1]=5555/78899
 
+        if(slaveMaster.size()!=2)
+            continue;
+
+        if(i==0)
+        {
+
+            CMdSpi*   mdspi=      new CMdSpi(*this,slaveMaster[1]);
+            CMdSpi::mdspi=mdspi;
+        }
+        while(CMdSpi::mdspi->getStatus()==false)
+        {
+            this_thread::yield();
+        }
+
         vector<CTraderSpi*> vSlave;
-     unordered_map<string, CTraderSpi*>mSlave =  makeSlaves(slaveMaster[0],vSlave);
+        unordered_map<string, CTraderSpi*>mSlave =  makeSlaves(slaveMaster[0],vSlave);
 
 
         NiuTraderSpi* ba=new NiuTraderSpi(*this,slaveMaster[1]);
         ba->setSlave(mSlave);
-          masterAccountMap[ba->getInvestorID()] = ba;
-//    CTraderSpi*tmacc;
-   typedef  unordered_map<string, CTraderSpi*>::value_type  const_pair;
-            BOOST_FOREACH(const_pair&node,mSlave)
-            {
-               cout<<"follow users="<<node.first<<endl;
-            }
-    }
+        masterAccountMap[ba->getInvestorID()] = ba;
+        //    CTraderSpi*tmacc;
 
+        typedef  unordered_map<string, CTraderSpi*>::value_type  const_pair;
+        BOOST_FOREACH(const_pair&node,mSlave)
+        {
+            cout<<"follow users="<<node.first<<endl;
+        }
+    }
+//new CMdSpi(*this,"slaveMaster[1]");
 
 }
 
@@ -597,9 +649,53 @@ void DataInitInstance::saveCThostFtdcTradingAccountFieldToDb(CThostFtdcTradingAc
     catch (const mysqlpp::Exception& er)
     {
         LOG(ERROR)  << "exec error: " << er.what() <<positonsql<< endl;
+//        query.execute("commit");
+        return ;
+    }
+}
+
+void DataInitInstance::saveDepthMarketDataToDb(CThostFtdcDepthMarketDataField *pDepthMarketData/*,string investor_id*/)
+{
+    mysqlpp::ScopedConnection con(*mysql_pool, true);
+    mysqlpp::Query query = con->query();
+
+//BidPrice1
+    double LastPrice=lexical_cast<double>(pDepthMarketData->LastPrice);
+    string instrument=lexical_cast<string>(pDepthMarketData->InstrumentID);
+     int muti=getInstrumentMulti(instrument);
+    string positonsql=string("update ctp_investor_position set close_profit_by_trade=(")+lexical_cast<string>(LastPrice)+
+           "-open_price)*position*" +lexical_cast<string>(muti)+" where instrument_id= '"+instrument+
+            "' and posi_direction=2";//DUO
+//  LOG(ERROR)<<positonsql;
+    try
+    {
+        query.execute(positonsql);
+        query.execute("commit");
+    }
+    catch (const mysqlpp::Exception& er)
+    {
+        LOG(ERROR)  << "exec error: " << er.what() << endl;
+         LOG(ERROR)<<positonsql;
         query.execute("commit");
         return ;
     }
+    positonsql=string("update ctp_investor_position set close_profit_by_trade=(")+
+               "open_price-"+lexical_cast<string>(LastPrice)+")*position*"+lexical_cast<string>(muti)+" where instrument_id= '"+instrument+
+                "' and posi_direction=3";//KONG
+//  LOG(ERROR)<<positonsql;
+    try
+    {
+        query.execute(positonsql);
+        query.execute("commit");
+    }
+    catch (const mysqlpp::Exception& er)
+    {
+        LOG(ERROR)  << "exec error: " << er.what() << endl;
+         LOG(ERROR)<<positonsql;
+        query.execute("commit");
+        return ;
+    }
+
 }
 
 

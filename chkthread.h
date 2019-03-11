@@ -13,9 +13,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <boost/bind.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread_pool.hpp>
-#include <boost/thread.hpp>
+//#include <boost/thread/mutex.hpp>
+//#include <boost/thread/thread_pool.hpp>
+//#include <boost/thread.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -36,12 +36,13 @@ class ChkThread
 private:
     unordered_map<string, UserOrderField*> NorderMap;
     unordered_map<string, UserOrderField*> ForderMap;
-    std::mutex mtx;
+
     std::thread chkThread;
     ChkThread(){}
     void run();
 
 public:
+     std::mutex mtx;
     static ChkThread& GetInstance()
     {
         static ChkThread Instance;
@@ -50,12 +51,9 @@ public:
 
     void  start();
     void putOrder(UserOrderField*userOrderField);
-    bool is_in_Nmap(string key);
     UserOrderField*get_Nuser_order(string key);
     UserOrderField*get_Fuser_order(string key);
-    void erase(UserOrderField *userOrderField);
-    void erase(string key);
-
+    bool haveOrder();
 
 };
 

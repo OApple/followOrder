@@ -26,7 +26,7 @@ using boost::algorithm::trim_copy;
 #include "niutraderspi.h"
 #include "user_order_field.h"
 #include "updatethread.h"
-
+#include "mdspi.h"
 //BrokerID统一为：9999
 //标准CTP：
 //    第一组：Trade Front：180.168.146.187:10000，Market Front：180.168.146.187:10010；【电信】
@@ -38,22 +38,27 @@ NiuTraderSpi::NiuTraderSpi(DataInitInstance&di, string&config):dii(di)
 {
     vector<string> config_list ;
     boost::split(config_list,config,boost::is_any_of("/"));
+    if(config_list.size()!=4)
+        return;
     _investorID=config_list[0];
     _password=config_list[1];
-    _trade_front_addr= dii._trade_front_addr;
-    _brokerID=dii.broker_id;
-    if(dii.useReal==1)
-    {
-        _trade_front_addr=dii.realTradeFrontAddr;
-         _brokerID=dii.realBrokerID;
-    }
+//    _trade_front_addr= dii._trade_front_addr;
+//    _brokerID=dii.broker_id;
+        _trade_front_addr= "tcp://"+config_list[2];
+        _brokerID=config_list[3];
+        cout<<_trade_front_addr<<endl;
+//    if(dii.MuseReal==1)
+//    {
+//        _trade_front_addr=dii.realTradeFrontAddr;
+//         _brokerID=dii.realBrokerID;
+//    }
 
     string prefix=_investorID+"/";
     system(("mkdir  -p "+prefix).c_str());
     CThostFtdcTraderApi* pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(prefix.c_str());			// 创建UserApi
     pUserApi->RegisterSpi((CThostFtdcTraderSpi*)this);			// 注册事件类
-    pUserApi->SubscribePublicTopic(THOST_TERT_RESUME);					// 注册公有流
-    pUserApi->SubscribePrivateTopic(THOST_TERT_RESUME);					// 注册私有流
+    pUserApi->SubscribePublicTopic(THOST_TERT_QUICK);					// 注册公有流
+    pUserApi->SubscribePrivateTopic(THOST_TERT_QUICK);					// 注册私有流
 
 //    pUserApi->RegisterFront("tcp://180.168.146.187:10001");
 //    pUserApi->RegisterFront("tcp://218.202.237.33:10002");
@@ -378,9 +383,14 @@ void NiuTraderSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pIn
 {
     LOG(WARNING) << "------->>>>OnRspQryInvestorPosition" << endl;
     HoldPositionInfo*hp=NULL;
+
     if (!IsErrorRspInfo(pRspInfo) && pInvestorPosition)
     {
+
         hp=initpst(pInvestorPosition);
+        CMdSpi*mdspi=CMdSpi::getInstance();
+        if((hp->longTotalPosition!=0)||(hp->shortTotalPosition!=0))
+           mdspi->Subscribe(string(pInvestorPosition->InstrumentID));
         string info=strInvestorPositionField(pInvestorPosition);
         LOG(WARNING) << "------->>>>OnRspQryInvestorPosition" <<info<<endl;
         dii.saveThostFtdcInvestorPositionFieldToDb(pInvestorPosition);
@@ -465,7 +475,6 @@ void NiuTraderSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pIn
 
 void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 {
-    //    return ;// test
     UpdateThread&upt= UpdateThread::GetInstance();
     upt.notify();
 //    typedef  CTraderSpi*const_pair;
@@ -493,10 +502,20 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
     {
         //modify status
         mtx.lock();
+         ChkThread &ct=  ChkThread::GetInstance();
+        lock_guard<mutex> lck (ct.mtx);
+//        int fcnt=0;
+//        BOOST_FOREACH(const_pair&node,_slaves)//if all follow fail how to deal with?
+//        {
+//            string key=GetKey(pOrder,node.second);
+//            UserOrderField*uof=ct.get_Nuser_order(key);
+//            if(uof!=NULL)
+//                fcnt++;
+//        }
         BOOST_FOREACH(const_pair&node,_slaves)
         {
             string key=GetKey(pOrder,node.second);
-            ChkThread &ct=  ChkThread::GetInstance();
+
             UserOrderField*uof=ct.get_Nuser_order(key);
             if((uof!=NULL)&&(uof->GetStatus()=='3'))
             {
@@ -508,10 +527,13 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
                 uof->SetStatus('5');
                 continue;
             }
-            if(uof==NULL)// no into queue and trade directly
+            if((uof==NULL) &&(pOrder->OrderSubmitStatus=='0'))// no into queue and trade directly
             {
                 UserOrderField* uof = UserOrderField::CreateUserOrderField(pOrder,node.second);
+                if(uof==nullptr)
+                    continue;
                 uof->SetStatus('r');
+                uof->setImmediate_flag(true);
                 cout<<"ReqOrderInsert"<<endl;
                 int ret= uof->ReqOrderInsert();
                 if(ret==0)
@@ -529,14 +551,18 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 
     if(pOrder->OrderStatus == '3')
     {
+        if(strlen(pOrder->ActiveUserID))//invalid or duplicate order  and discard
+            return;
         mtx.lock();
+            ChkThread&ct=  ChkThread::GetInstance();
+         lock_guard<mutex> lck (ct.mtx);
         BOOST_FOREACH(const_pair&node,_slaves)
         {
             string key=GetKey(pOrder,node.second);
-            ChkThread&ct=  ChkThread::GetInstance();
+
             UserOrderField*uof=ct.get_Nuser_order(key);
-            int len=strlen(pOrder->ActiveUserID);
-            if((uof!=NULL)||(len))
+
+            if(uof!=NULL)
             {
                 continue;
             }
@@ -566,17 +592,19 @@ void NiuTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
         {}
     }
 
-    if(pOrder->OrderStatus == '5')
+    if(pOrder->OrderStatus == '5')//if some resp on way,how to deal with?
     {
         mtx.lock();
+         ChkThread&ct=  ChkThread::GetInstance();
+        lock_guard<mutex> lck (ct.mtx);
         BOOST_FOREACH(const_pair&node,_slaves)
         {
             string key=GetKey(pOrder,node.second);
-            ChkThread&ct=  ChkThread::GetInstance();
+
             UserOrderField*uof=ct.get_Nuser_order(key);
             if(uof!=NULL)
             {
-                if(uof->GetStatus()!='7')
+                if((uof->GetStatus()!='5')&&(uof->GetStatus()!='7'))
                     uof->ReqOrderAction();
                 uof->SetStatus('5');
 
@@ -626,7 +654,13 @@ void NiuTraderSpi::OnRtnTrade(CThostFtdcTradeField *pTrade)
     LOG(WARNING)<< ("--->>>OnRtnTrade:" + tmpstr);
     dii.saveThostFtdcTradeFieldToDb(pTrade);
 
+    if(pTrade->OffsetFlag!='0')
+    {
+        CMdSpi*mdspi=CMdSpi::getInstance();
+        mdspi->UnSubscribe(string(pTrade->InstrumentID));
+    }
     //todo modify account
+    //send req to queue
     ReqQryTradingAccount();
 
     ReqQryInvestorPosition();
@@ -835,6 +869,8 @@ void NiuTraderSpi::SaveTransactionRecord()
         {
             vector<string> col;
             split(col,line[start],is_any_of("|"));
+            if(col.size()<15)
+                continue;
             sql = "replace INTO ctp_transaction_record (investorid,close_date,exchange,product,instrument,bs,price,lots,turnover,oc,fee,realizedpl,trans_no)  VALUES (";
             sql.append("'"+_investorID+"'"+",");
             sql.append("'"+trim_copy(col[1])+"'"+",");

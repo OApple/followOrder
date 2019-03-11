@@ -14,7 +14,9 @@ SOURCES += main.cpp \
     chkthread.cpp \
     niutraderspi.cpp \
     user_order_field.cpp \
-    updatethread.cpp
+    updatethread.cpp \
+    mdspi.cpp \
+    updateacc.cpp
 
 
 HEADERS += \
@@ -28,10 +30,12 @@ HEADERS += \
     chkthread.h \
     niutraderspi.h \
     user_order_field.h \
-    updatethread.h
+    updatethread.h \
+    mdspi.h \
+    updateacc.h
 
 
-LIBS += -L$$PWD/../lib/   -lthostmduserapi  -lthosttraderapi
+LIBS += -L$$PWD/../lib/   -lthosttraderapi -lthostmduserapi
 
 INCLUDEPATH += $$PWD/../include
 
@@ -47,7 +51,7 @@ LIBS += -L$$PWD/../boost_1_61_0/stage/lib/ -lboost_system -lboost_date_time -lbo
 INCLUDEPATH += $$PWD/../boost_1_61_0/
 
 
-LIBS +=  -licui18n -licuuc -licudata  -ldl -lhiredis  -lSQLiteCpp -L/usr/local/lib -lsqlite3
+LIBS +=  -licui18n -licuuc -licudata  -ldl -lhiredis -L$$PWD/../lib/   -lSQLiteCpp -L/usr/local/lib -lsqlite3
 
 OTHER_FILES += \
     ../build-FlowOrder-gcc5_4_0-Debug/config/global.properties

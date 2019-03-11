@@ -6,13 +6,27 @@ using boost::split;
 using boost::is_any_of;
 using boost::algorithm::trim_copy;
 
+
+bool UserOrderField::immediate_flag() const
+{
+    return _immediate_flag;
+}
+
+void UserOrderField::setImmediate_flag(bool immediate_flag)
+{
+    _immediate_flag = immediate_flag;
+}
 UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder,CTraderSpi*uai)
 {
 
     vector<string>parameter;
     parameter=uai->getParameter();
     vector<string> tmp;
+    if(parameter[0].size()==0)
+        return nullptr;
     split(tmp,parameter[0],is_any_of(":"));
+    if(tmp.size()!=2)
+        return nullptr;
     double n1=lexical_cast<double>(tmp[1]);
     double n2=lexical_cast<int>(tmp[0]);
     double totalVolume=(pOrder->VolumeTotalOriginal*n1/n2);
@@ -28,9 +42,13 @@ UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder
     userOrderField->_hedge_flag=pOrder->CombHedgeFlag;
     userOrderField->_instrumentID=pOrder->InstrumentID;
     userOrderField->_investorID=uai->investorID();
+    if(parameter[2].size()==0)
+        return nullptr;
     userOrderField->_tick=lexical_cast<int>(parameter[2]);
     userOrderField->_price_tick=DataInitInstance::GetInstance().getPriceTick(pOrder->InstrumentID);
     userOrderField->_offset_flag=lexical_cast<string>(pOrder->CombOffsetFlag);
+    if(parameter[1].size()==0)
+        return nullptr;
     int pricetype=lexical_cast<int>(parameter[1]);
     if(pricetype==1)// nman price
     {
@@ -56,6 +74,15 @@ UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder
 
 int  UserOrderField:: ReqOrderInsert()
 {
+    if(_followcnt>=3)
+    {
+        _status='5';
+        return 0;
+    }
+    else
+    {
+        _followcnt++;
+    }
     CTraderSpi* pTraderSpi= (CTraderSpi*)  _pTraderSpi;
     int ret=pTraderSpi->ReqOrderInsert(this);
     return ret;

@@ -58,14 +58,22 @@ public:
             return false;
         }
     }
-    std::string get(std::string key)
+    string get(string &key)
     {
         this->_reply = (redisReply*)redisCommand(this->_connect, "GET %s", key.c_str());
-        std::string str = this->_reply->str;
+       if(this->_reply->str==nullptr)
+       {
+           freeReplyObject(this->_reply);
+           return "";
+       }
+       else
+       {
+        string str = this->_reply->str;
         freeReplyObject(this->_reply);
         return str;
+       }
     }
-  std::string getConfig()
+ string getConfig()
   {
       std::string key="followUser";
       this->_reply = (redisReply*)redisCommand(this->_connect, "GET %s", key.c_str());

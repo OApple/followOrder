@@ -38,6 +38,8 @@ string strTradingAccountField(CThostFtdcTradingAccountField *pTradingAccount);
 
 string strInvestorPositionField(CThostFtdcInvestorPositionField *pInvestorPosition);
 
+string strDepthMarketData(CThostFtdcDepthMarketDataField *pmd);
+
 //提取投资者报单信息
 string strInputOrderField(CThostFtdcInputOrderField *order);
 

@@ -24,31 +24,40 @@ using boost::is_any_of;
 #include "util.h"
 #include "chkthread.h"
 #include "user_order_field.h"
-
+#include "mdspi.h"
 #pragma warning(disable : 4996)
 
 //126373/123456/1:1/1/1
 CTraderSpi:: CTraderSpi(DataInitInstance&di, string&config):dii(di)
 {
     vector<string> config_list ;
-    _config=config;
     boost::split(config_list,config,boost::is_any_of("/"));
+    if(config_list.size()!=7)
+        return ;
+    _config=config;
     _investorID=config_list[0];
     _password=config_list[1];
-    ratio=config_list[2];
-    priceType=(config_list[3]);
-    followTick=(config_list[4]);
+    _ratio=config_list[4];
+    _priceType=(config_list[5]);
+    _followTick=(config_list[6]);
 
-
-    _trade_front_addr= dii._trade_front_addr;
-    _brokerID=dii.broker_id;
+    _trade_front_addr= "tcp://"+config_list[2];
+    _brokerID=config_list[3];
+    cout<<_trade_front_addr<<endl;
+//    _trade_front_addr= dii._trade_front_addr;
+//    _brokerID=dii.broker_id;
+//     if(dii.SuseReal==1)
+//     {
+//         _trade_front_addr=dii.realTradeFrontAddr;
+//          _brokerID=dii.realBrokerID;
+//     }
 
     string prefix=_investorID+"/";
     system(("mkdir  -p "+prefix).c_str());
     CThostFtdcTraderApi* pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(prefix.c_str());			// 创建UserApi
     pUserApi->RegisterSpi((CThostFtdcTraderSpi*)this);			// 注册事件类
-    pUserApi->SubscribePublicTopic(THOST_TERT_RESUME);					// 注册公有流
-    pUserApi->SubscribePrivateTopic(THOST_TERT_RESUME);					// 注册私有流
+    pUserApi->SubscribePublicTopic(THOST_TERT_QUICK);					// 注册公有流
+    pUserApi->SubscribePrivateTopic(THOST_TERT_QUICK);					// 注册私有流
 
 //    pUserApi->RegisterFront("tcp://180.168.146.187:10001");
 //    pUserApi->RegisterFront("tcp://218.202.237.33:10002");
@@ -65,8 +74,11 @@ CTraderSpi::CTraderSpi( DataInitInstance &di,
 
 CTraderSpi::~CTraderSpi()
 {
-    _pUserApi->RegisterSpi(NULL);
-    _pUserApi->Release();
+    if(_pUserApi)
+    {
+        _pUserApi->RegisterSpi(NULL);
+        _pUserApi->Release();
+    }
 }
 
 // CTraderSpi:: CTraderSpi()
@@ -204,7 +216,7 @@ void CTraderSpi::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettleme
         lastmsg+=_settlemsg;
         LOG(INFO) << lexical_cast<string>(this)<<lastmsg<<endl;
 
-        SaveTransactionRecord();
+//        SaveTransactionRecord();
         ReqSettlementInfoConfirm();
         _settlemsg.clear();
     }
@@ -344,9 +356,14 @@ void CTraderSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInve
 {
     //    cerr << "------->>>>OnRspQryInvestorPosition" << endl;
     HoldPositionInfo*hp=NULL;
+
     if (!IsErrorRspInfo(pRspInfo) && pInvestorPosition)
     {
+
         hp=initpst(pInvestorPosition);
+        CMdSpi*mdspi=CMdSpi::getInstance();
+        if((hp->longTotalPosition!=0)||(hp->shortTotalPosition!=0))
+           mdspi->Subscribe(string(pInvestorPosition->InstrumentID));
         string info=strInvestorPositionField(pInvestorPosition);
         LOG(INFO)<<lexical_cast<string>(this)<<"------->>>>OnRspQryInvestorPosition"<<info;
         dii.saveThostFtdcInvestorPositionFieldToDb(pInvestorPosition);
@@ -443,6 +460,8 @@ void CTraderSpi::SaveTransactionRecord()
         {
             vector<string> col;
             split(col,line[start],is_any_of("|"));
+            if(col.size()<15)
+                continue;
             sql = "replace INTO ctp_transaction_record (investorid,close_date,exchange,product,instrument,bs,price,lots,turnover,oc,fee,realizedpl,trans_no)  VALUES (";
             sql.append("'"+_investorID+"'"+",");
             sql.append("'"+trim_copy(col[1])+"'"+",");
@@ -664,10 +683,18 @@ void CTraderSpi::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThost
 
     ChkThread&ct=  ChkThread::GetInstance();
     string key=GetKey2(pInputOrder);
-    UserOrderField*userOrderField =  ct.get_Fuser_order(key);
-    if(userOrderField!=NULL)
-        userOrderField->SetStatus('7');
-    // save to db
+    {
+        lock_guard<mutex> lck (ct.mtx);
+        UserOrderField*userOrderField =  ct.get_Fuser_order(key);
+        if((userOrderField!=NULL))
+        {
+            if(userOrderField->immediate_flag()==true)
+                userOrderField->SetStatus('5');
+            else
+                userOrderField->SetStatus('7');
+        }
+        // save to db
+    }
     dii.saveThostFtdcInputOrderFieldToDb(pInputOrder,rsp);
     return ;
 
@@ -677,10 +704,10 @@ void CTraderSpi::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CTh
 {
     //    cout<<"----->>>>OnErrRtnOrderInsert"<<endl;
 
-    bool err = IsErrorRspInfo(pRspInfo);
-    string sInputOrderInfo = strInputOrderField(pInputOrder);
-    string prsp=strRspInfoField(pRspInfo);
-    LOG(INFO)<<(lexical_cast<string>(this)+"-------->>>OnErrRtnOrderInsert:"+sInputOrderInfo+prsp);
+//    bool err = IsErrorRspInfo(pRspInfo);
+//    string sInputOrderInfo = strInputOrderField(pInputOrder);
+//    string prsp=strRspInfoField(pRspInfo);
+//    LOG(INFO)<<(lexical_cast<string>(this)+"-------->>>OnErrRtnOrderInsert:"+sInputOrderInfo+prsp);
 
 }
 
@@ -792,6 +819,7 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
         //modify
         ChkThread&ct=  ChkThread::GetInstance();
         string key=GetKey2(pOrder);
+        lock_guard<mutex> lck (ct.mtx);
         UserOrderField*userOrderField =  ct.get_Fuser_order(key);
         if(userOrderField!=NULL)
             userOrderField->SetStatus('5');
@@ -802,6 +830,7 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
     {
         ChkThread&ct=  ChkThread::GetInstance();
         string key=GetKey2(pOrder);
+        lock_guard<mutex> lck (ct.mtx);
         UserOrderField*userOrderField =  ct.get_Fuser_order(key);
         if(userOrderField!=NULL)
             userOrderField->SetStatus('1');
@@ -812,6 +841,7 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
     {
         ChkThread&ct=  ChkThread::GetInstance();
         string key=GetKey2(pOrder);
+        lock_guard<mutex> lck (ct.mtx);
         UserOrderField*userOrderField =  ct.get_Fuser_order(key);
         if(userOrderField!=NULL)
             userOrderField->SetStatus('2');
@@ -834,7 +864,15 @@ void CTraderSpi::OnRtnOrder(CThostFtdcOrderField *pOrder)
 
     if(pOrder->OrderStatus == '5')
     {
-
+        ChkThread&ct=  ChkThread::GetInstance();
+        string key=GetKey2(pOrder);
+        lock_guard<mutex> lck (ct.mtx);
+        UserOrderField*userOrderField =  ct.get_Fuser_order(key);
+        if((userOrderField!=NULL)&&(userOrderField->GetStatus()=='r'))
+        {
+               userOrderField->ReqOrderInsert();
+        }
+        return ;
 
     }
 
@@ -882,7 +920,11 @@ void CTraderSpi::OnRtnTrade(CThostFtdcTradeField *pTrade)
     string tmpstr = strTradeField(pTrade);
     LOG(INFO) << (lexical_cast<string>(this)+"--->>>OnRtnTrade:" + tmpstr);
     dii.saveThostFtdcTradeFieldToDb(pTrade);
-
+    if(pTrade->OffsetFlag!='0')
+    {
+        CMdSpi*mdspi=CMdSpi::getInstance();
+        mdspi->UnSubscribe(string(pTrade->InstrumentID));
+    }
     //todo modify account
     ReqQryTradingAccount();
 
@@ -1021,9 +1063,9 @@ vector<string>CTraderSpi::getParameter()
 {
     vector<string>tmp;
     mtx.lock();
-    tmp.push_back(ratio);
-    tmp.push_back(priceType);
-    tmp.push_back(followTick);
+    tmp.push_back(_ratio);
+    tmp.push_back(_priceType);
+    tmp.push_back(_followTick);
     mtx.unlock();
     return tmp;
 }
@@ -1072,14 +1114,15 @@ void CTraderSpi::setConfig(const string &config)
     vector<string> config_list ;
     _config=config;
     boost::split(config_list,config,boost::is_any_of("/"));
-
+    if(config_list.size()!=7)
+        return ;
     //lock
     mtx.lock();
-//    _investorID=config_list[0];
-//    _password=config_list[1];
-    ratio=config_list[2];
-    priceType=(config_list[3]);
-    followTick=(config_list[4]);
+    //    _investorID=config_list[0];
+    //    _password=config_list[1];
+    _ratio=config_list[4];
+    _priceType=(config_list[5]);
+    _followTick=(config_list[6]);
     mtx.unlock();
     //unlock
 }

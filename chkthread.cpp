@@ -13,52 +13,69 @@ using boost::lexical_cast;
 void ChkThread::run()
 {
     //check
+    vector<unordered_map<string, UserOrderField*> ::iterator>ntmp;
+    vector<string>ftmp;
     while (true)
     {
-        mtx.lock();
-        unordered_map<string, UserOrderField*> ::iterator it=NorderMap.begin();
-        for(;it!=NorderMap.end();it++)
         {
-            UserOrderField*uof=it->second;
-            LOG(ERROR)<<"NorderMap key="<<it->first<<"status="<<uof->GetStatus()<<endl;
-            if(uof->GetStatus()=='r')
+            lock_guard<mutex> lck (mtx);
+            unordered_map<string, UserOrderField*> ::iterator it=NorderMap.begin();
+            for(;it!=NorderMap.end();it++)
             {
-                //todo cancle
-                uof->ReqOrderAction();
-                ForderMap.erase(uof->GetKey2());
-                //todo reqinsertorder
-                uof->UpdateRef();
-                uof->UpdatePrice();
-                ForderMap[uof->GetKey2()]=uof;
-                uof->ReqOrderInsert();
-            }
-            if(uof->GetStatus()=='5')
-            {
-                string key2=uof->GetKey2();
-                LOG(ERROR)<<"erase  NorderMap key="<<it->first<<endl;
-                LOG(ERROR)<<"erase ForderMap key="<<key2<<endl;
-                NorderMap.erase(it);
-                ForderMap.erase(key2);
-                delete uof;
+                UserOrderField*uof=it->second;
+                LOG(ERROR)<<"NorderMap key="<<it->first<<"status="<<uof->GetStatus()<<endl;
+                if(uof->GetStatus()=='r')
+                {
+                    //todo cancle
+                    uof->ReqOrderAction();
+//                    ForderMap.erase(uof->GetKey2());
+                    //todo reqinsertorder
+                    uof->UpdateRef();
+                    uof->UpdatePrice();
+//                    ForderMap[uof->GetKey2()]=uof;
+//                    uof->ReqOrderInsert();
+                }
+                if(uof->GetStatus()=='5')
+                {
+                    string key2=uof->GetKey2();
+                    LOG(ERROR)<<"erase  NorderMap key="<<it->first<<endl;
+                    LOG(ERROR)<<"erase ForderMap key="<<key2<<endl;
+                    // NorderMap.erase(it);
+                    ntmp.push_back(it);
+                    //                ForderMap.erase(key2);
+                    ftmp.push_back(key2);
+                    delete uof;
+                    //it=NorderMap.begin();
+                    //if(it!=NorderMap.end())
+                    //goto next;
+                    continue;
+                }
+                else
+                {
+                    continue;
+                }
 
-                break;
             }
-            else
+            for(int i=0;i<ntmp.size();i++)
             {
-                continue;
+                NorderMap.erase(ntmp[i]);
+                ForderMap.erase(ftmp[i]);
             }
-
+            ntmp.clear();
+            ftmp.clear();
         }
+        //        it=NorderMap.begin();
+
+
+        //        if(it!=NorderMap.end())
+        //            continue;
+        //        else
         LOG(INFO)<<"NorderMap size="<<NorderMap.size()<<endl;
         LOG(INFO)<<"ForderMap size="<<ForderMap.size()<<endl;
 
         LOG(WARNING)<<"NorderMap size="<<NorderMap.size()<<endl;
         LOG(WARNING)<<"ForderMap size="<<ForderMap.size()<<endl;
-        mtx.unlock();
-        //        it=NorderMap.begin();
-        if(it!=NorderMap.end())
-            continue;
-        sleep(10);
+        sleep(5);
     }
 }
 void ChkThread::start()
@@ -70,7 +87,7 @@ void ChkThread::putOrder(UserOrderField*userOrderField)
 {
     string key=userOrderField->GetKey();
     string key2=userOrderField->GetKey2();
-    mtx.lock();
+//    mtx.lock();
 
     unordered_map<string, UserOrderField*> ::iterator nit=NorderMap.find(key);
     if(nit==NorderMap.end())
@@ -80,93 +97,45 @@ void ChkThread::putOrder(UserOrderField*userOrderField)
     if(fit==ForderMap.end())
         ForderMap[key2]=userOrderField;
 
-    mtx.unlock();
+//    mtx.unlock();
 }
-bool ChkThread::is_in_Nmap(string key)
-{
-    mtx.lock();
-    unordered_map<string, UserOrderField*> ::iterator it=NorderMap.find(key);
-    if(it==NorderMap.end())
-    {
-        mtx.unlock();
-        return false;
-    }
-    else
-    {
-        mtx.unlock();
-        return true;
-    }
-    mtx.unlock();
-}
+
 UserOrderField*ChkThread::get_Nuser_order(string key)
 {
-    mtx.lock();
+//    mtx.lock();
     unordered_map<string, UserOrderField*> ::iterator it=NorderMap.find(key);
     if(it==NorderMap.end())
     {
-        mtx.unlock();
+//        mtx.unlock();
         return NULL;
     }
     else
     {
-        mtx.unlock();
+//        mtx.unlock();
         return it->second;
     }
-    mtx.unlock();
+//    mtx.unlock();
 }
 UserOrderField*ChkThread::get_Fuser_order(string key)
 {
-    mtx.lock();
+//    mtx.lock();
     unordered_map<string, UserOrderField*> ::iterator it=ForderMap.find(key);
     if(it==ForderMap.end())
     {
-        mtx.unlock();
+//        mtx.unlock();
         return NULL;
     }
     else
     {
-        mtx.unlock();
+//        mtx.unlock();
         return it->second;
     }
-    mtx.unlock();
+    //    mtx.unlock();
 }
 
-void ChkThread::erase(UserOrderField* userOrderField)
+bool ChkThread::haveOrder()
 {
-    string key=userOrderField->GetKey();
-    string key2=userOrderField->GetKey2();
-    mtx.lock();
-    unordered_map<string, UserOrderField*> ::iterator it=NorderMap.find(key);
-    if(it==NorderMap.end())
-    {
-        mtx.unlock();
-        return ;
-    }
-    else
-    {
-        NorderMap.erase(key);
-        ForderMap.erase(key2);
-    }
-    mtx.unlock();
+    return (NorderMap.size()||ForderMap.size());
 }
-void ChkThread::erase(string key)
-{
-    mtx.lock();
-    unordered_map<string, UserOrderField*> ::iterator it=ForderMap.find(key);
-    UserOrderField*userOrderField;
-    if(it==NorderMap.end())
-    {
-        mtx.unlock();
-        return;
-    }
-    else
-    {
-        userOrderField=it->second;
-        string key=userOrderField->GetKey();
-        string key2=userOrderField->GetKey2();
-        NorderMap.erase(key);
-        ForderMap.erase(key2);
-    }
 
-    mtx.unlock();
-}
+

@@ -63,6 +63,9 @@ public:
     string getInvestorID() const;
     void setInvestorID(const string &investorID);
 
+    void ReqQryTradingAccount();
+
+    void ReqQryInvestorPosition();
 
     unordered_map<string, CTraderSpi *> &getSlave();
     void setSlave(unordered_map<string, CTraderSpi *> slaves);
@@ -141,9 +144,7 @@ private:
 
     void ReqSettlementInfoConfirm();
 
-    void ReqQryTradingAccount();
 
-    void ReqQryInvestorPosition();
 
     bool IsMyOrder(CThostFtdcOrderField *pOrder);
     void SaveTransactionRecord();

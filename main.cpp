@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <dlfcn.h>
 #include <glog/logging.h>
 
 using namespace std;
@@ -12,19 +13,20 @@ using namespace std;
 #include "updatethread.h"
 
 
-//DataInitInstance dii;
-
 int main(int argc, char**argv)
 {
     google::InitGoogleLogging(argv[0]);
-    //    google::InitGoogleLogging("");
     system("mkdir -p log");
     google::SetLogDestination(google::GLOG_INFO, "./log/info_");
     google::SetLogDestination(google::GLOG_WARNING, "./log/warn_");
     google::SetLogDestination(google::GLOG_ERROR, "./log/error_");
-   DataInitInstance& dii=DataInitInstance::GetInstance();
+
+    DataInitInstance& dii=DataInitInstance::GetInstance();
+
     dii.GetConfigFromFile();
+
     dii.GetConfigFromRedis();
+
     dii.DataInit();
     ChkThread&ct=ChkThread::GetInstance();
     ct.start();
@@ -34,7 +36,7 @@ int main(int argc, char**argv)
 
     while(1){
         sleep(2);
-//        ut.notify();
+
     }
     google::ShutdownGoogleLogging();
     return 0;

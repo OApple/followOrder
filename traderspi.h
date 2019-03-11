@@ -99,7 +99,10 @@ public:
 
 
 
-
+    ///请求查询资金账户
+    void ReqQryTradingAccount();
+    ///请求查询投资者持仓
+    void ReqQryInvestorPosition();
 
     int total_trade_num() const;
     void setTotal_trade_num(int total_trade_num);
@@ -143,9 +146,9 @@ public:
 private:
 
     std::mutex mtx;
-    string ratio;
-    string followTick="1";
-    string priceType;
+    string _ratio;
+    string _followTick="1";
+    string _priceType;
 
     string _settlemsg;
     //    boost::recursive_mutex _spi_mtx;
@@ -187,10 +190,7 @@ private:
 
     void ReqSettlementInfoConfirm();
 
-    ///请求查询资金账户
-    void ReqQryTradingAccount();
-    ///请求查询投资者持仓
-    void ReqQryInvestorPosition();
+
 
 
 
