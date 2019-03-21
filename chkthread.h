@@ -50,7 +50,10 @@ public:
     }
 
     void  start();
-    void putOrder(UserOrderField*userOrderField);
+    void putNOrder(UserOrderField*userOrderField);
+    void putFOrder(UserOrderField*userOrderField);
+    void eraseNOrder(UserOrderField*userOrderField);
+    void eraseFOrder(string key);
     UserOrderField*get_Nuser_order(string key);
     UserOrderField*get_Fuser_order(string key);
     bool haveOrder();

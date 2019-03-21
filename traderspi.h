@@ -130,6 +130,10 @@ public:
 
     vector<string> getParameter();
 
+    ///投资者结算结果确认
+    void ReqQrySettlementInfo();
+
+    void ReqSettlementInfoConfirm();
 
     int sessionID() const;
     void setSessionID(int sessionID);
@@ -143,6 +147,8 @@ public:
     string brokerID() const;
     void setBrokerID(const string &brokerID);
 
+
+    unordered_map<string, HoldPositionInfo*> positionmap;
 private:
 
     std::mutex mtx;
@@ -185,10 +191,6 @@ private:
     ///请求查询结算信息确认
     int ReqQrySettlementInfoConfirm();
 
-    ///投资者结算结果确认
-    void ReqQrySettlementInfo();
-
-    void ReqSettlementInfoConfirm();
 
 
 
@@ -203,7 +205,8 @@ private:
     bool IsMyOrder(CThostFtdcOrderField *pOrder);
     // 是否正在交易的报单
     bool IsTradingOrder(CThostFtdcOrderField *pOrder);
-
+    void processHowManyHoldsCanBeClose(CThostFtdcOrderField *pOrder,string type);
+    void processtrade(CThostFtdcOrderField *pOrder);
     //初始化持仓信息
     HoldPositionInfo* initpst(CThostFtdcInvestorPositionField *pInvestorPosition);
     void SaveTransactionRecord();

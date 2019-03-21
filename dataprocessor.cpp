@@ -489,7 +489,7 @@ void DataInitInstance::saveThostFtdcTradeFieldToDb(CThostFtdcTradeField *pTrade)
         row.exchangeid=pTrade->ExchangeID;
 
         row.tradedatetime = mysqlpp::DateTime(time(NULL));
-        row.tradeid=boost::algorithm::trim_copy(std::string(pTrade->OrderSysID));
+        row.tradeid=boost::algorithm::trim_copy(std::string(pTrade->TradeID));
         //    tradedatetime_ctp=mysqlpp::DateTime(time(NULL));
         string datetime=string(pTrade->TradeDate)+" "+pTrade->TradeTime;
 //        cout<<tradedatetime_ctp<<endl;

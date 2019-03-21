@@ -16,26 +16,28 @@ using boost::split;
 using boost::is_any_of;
 void UpdateAcc::run()
 {
+    typedef  unordered_map<string, NiuTraderSpi*>::value_type  const_pair1;
+    typedef  unordered_map<string, CTraderSpi*>::value_type  const_pair2;
     DataInitInstance& dii=DataInitInstance::GetInstance();
     std::unique_lock<std::mutex> lck(mtx);
+    unordered_map<string, NiuTraderSpi*> &nmap=dii.masterAccountMap;
     while(true)
     {
         cv.wait(lck);
-
-        ChkThread& ct= ChkThread::GetInstance();
-        if(ct.haveOrder())
+        BOOST_FOREACH(const_pair1&node1,nmap)
         {
-            LOG(ERROR)<<"maps have order refuse update";
-            return ;
-        }
-        if(slaveMasters==dii.slaveMasters)
-        {
-            continue;
-        }
-        else
-        {
+            NiuTraderSpi*nsp=node1.second;
+            nsp->ReqQryTradingAccount();
+            nsp->ReqQryInvestorPosition();
+            BOOST_FOREACH(const_pair2&node2,nsp->getSlave())
+            {
+                CTraderSpi*csp=node2.second;
+                csp->ReqQryTradingAccount();
+                csp->ReqQryInvestorPosition();
+            }
 
         }
+
     }
 }
 

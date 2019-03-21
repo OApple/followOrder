@@ -45,6 +45,10 @@ public:
     ///请求查询投资者持仓响应
     virtual void OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInvestorPosition, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
+    ///请求查询报单响应
+    virtual void OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) ;
+
+
     ///报单通知
     virtual void OnRtnOrder(CThostFtdcOrderField *pOrder);
 
@@ -144,7 +148,8 @@ private:
 
     void ReqSettlementInfoConfirm();
 
-
+    ///请求查询报单
+    int ReqQryOrder() ;
 
     bool IsMyOrder(CThostFtdcOrderField *pOrder);
     void SaveTransactionRecord();

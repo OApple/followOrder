@@ -18,20 +18,9 @@ void UserOrderField::setImmediate_flag(bool immediate_flag)
 }
 UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder,CTraderSpi*uai)
 {
-
     vector<string>parameter;
     parameter=uai->getParameter();
-    vector<string> tmp;
-    if(parameter[0].size()==0)
-        return nullptr;
-    split(tmp,parameter[0],is_any_of(":"));
-    if(tmp.size()!=2)
-        return nullptr;
-    double n1=lexical_cast<double>(tmp[1]);
-    double n2=lexical_cast<int>(tmp[0]);
-    double totalVolume=(pOrder->VolumeTotalOriginal*n1/n2);
-    if(totalVolume<1)
-        totalVolume=1;
+
     UserOrderField* userOrderField = new UserOrderField();
     userOrderField->brokerID=uai->brokerID();
     userOrderField->_direction=pOrder->Direction;
@@ -42,6 +31,7 @@ UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder
     userOrderField->_hedge_flag=pOrder->CombHedgeFlag;
     userOrderField->_instrumentID=pOrder->InstrumentID;
     userOrderField->_investorID=uai->investorID();
+    userOrderField->begin_time=time(NULL);
     if(parameter[2].size()==0)
         return nullptr;
     userOrderField->_tick=lexical_cast<int>(parameter[2]);
@@ -61,14 +51,12 @@ UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder
         userOrderField->orderPriceType="1";
     }
 
-    userOrderField->_order_ref=uai->orderRefInc();
-//    uai->setOrderRef(userOrderField->_order_ref+1);
-    userOrderField->_volume=totalVolume;
     userOrderField->_pTraderSpi=uai;
+    userOrderField->_volume=pOrder->VolumeTotalOriginal;
 //    userOrderField->_pUserApi=uai->pUserApi;
     userOrderField->_status='z';
     userOrderField->_key=userOrderField->NinvestorID+userOrderField->NOrderSysID+userOrderField->_investorID;
-    userOrderField->_key2=lexical_cast<string>(userOrderField->_investorID)+lexical_cast<string>(userOrderField->_order_ref);
+//    userOrderField->_key2=lexical_cast<string>(userOrderField->_investorID)+lexical_cast<string>(userOrderField->_order_ref);
     return userOrderField;
 }
 
@@ -121,6 +109,12 @@ void UserOrderField::UpdatePrice()
     {
         _price-=(_tick*_price_tick);
     }
+
+}
+
+void UserOrderField::DecVol()
+{
+    _volume--;
 
 }
 string UserOrderField::GetKey()

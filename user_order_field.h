@@ -47,20 +47,20 @@ private:
     bool _immediate_flag=false;
     char _direction;
     unsigned int _tick;
-    string _investorID="";
+
     int _frontID;
     int _sessionID;
-    unsigned int _order_ref;
+
     int _requestID;
     string _instrumentID;
     string _offset_flag;
     string _hedge_flag;
     double _price;
     double _price_tick;
-    int _volume;
+
     char _followcnt=0;
     string _key;
-    string  _key2;
+
 public:
     static UserOrderField*CreateUserOrderField(CThostFtdcOrderField *pOrder,CTraderSpi*uai);
     friend int CTraderSpi::ReqOrderInsert(UserOrderField* userOrderField);
@@ -71,11 +71,17 @@ public:
     char GetStatus();
     int UpdateRef();
     void UpdatePrice();
+    void DecVol();
     string GetKey();
     string GetKey2();
 
+        unsigned int _order_ref;
+      string _investorID="";
+     string  _key2;
+     int _volume;
     //string orderType;//addition info
     string timeFlag="0";
+   time_t begin_time;
 
     string brokerID="";
     //    int followCount=0;// follow order times
