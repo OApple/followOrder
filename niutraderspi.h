@@ -2,8 +2,8 @@
 #define NIUTRADER_H
 #include <list>
 #include <string>
-#include <SQLiteCpp/SQLiteCpp.h>
-#include <SQLiteCpp/VariadicBind.h>
+//#include <SQLiteCpp/SQLiteCpp.h>
+//#include <SQLiteCpp/VariadicBind.h>
 #include <ThostFtdcTraderApi.h>
 #include "property.h"
 #include "dataprocessor.h"
@@ -27,7 +27,7 @@ public:
     ///登录请求响应
     virtual void OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,	CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-    ///请求查询结算信息确认响应
+    //请求查询结算信息确认响应
     virtual void OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     ///请求查询投资者结算结果响应
@@ -36,8 +36,8 @@ public:
     ///投资者结算结果确认响应
     virtual void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
-    //    ///请求查询合约响应
-    //    virtual void OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+        ///请求查询合约响应
+    virtual void OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     ///请求查询资金账户响应
     virtual void OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTradingAccount, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
@@ -70,6 +70,8 @@ public:
     void ReqQryTradingAccount();
 
     void ReqQryInvestorPosition();
+
+     void ReqQryInstrument();
 
     unordered_map<string, CTraderSpi *> &getSlave();
     void setSlave(unordered_map<string, CTraderSpi *> slaves);
@@ -104,6 +106,12 @@ public:
 
     CThostFtdcTraderApi* _pUserApi;
 
+    bool getStatus();
+    void setStatus(bool value);
+
+    bool qryinstrument() const;
+    void setQryinstrument(bool qryinstrument);
+
 protected:
 
 
@@ -126,7 +134,7 @@ private:
     int _orderRef;
     string _settlemsg;
     DataInitInstance &dii;
-    SQLite::Database *sqlite_handle;
+//    SQLite::Database *sqlite_handle;
     int _total_trade_num;
 
     int _profit_num;
@@ -136,7 +144,7 @@ private:
     double _loss;
 
     int _loss_num;
-
+    bool _qryinstrument=false;
     ///用户登录请求
     void ReqUserLogin();
 

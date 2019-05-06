@@ -42,13 +42,24 @@ UserOrderField*UserOrderField::CreateUserOrderField(CThostFtdcOrderField *pOrder
     int pricetype=lexical_cast<int>(parameter[1]);
     if(pricetype==1)// nman price
     {
+
+        if(DataInitInstance::GetInstance().debug)
+        {
+            if( userOrderField->_direction=='0')
+                userOrderField->_price=pOrder->LimitPrice-10;
+            else
+                userOrderField->_price=pOrder->LimitPrice+10;
+        }
+        else
         userOrderField->_price=pOrder->LimitPrice;
-        userOrderField->orderPriceType="2";
+
+
+        userOrderField->orderPriceType='2';
     }
     if(pricetype==2)//market price
     {
-        userOrderField->_price=0;
-        userOrderField->orderPriceType="1";
+        userOrderField->_price=0;//get
+        userOrderField->orderPriceType='1';
     }
 
     userOrderField->_pTraderSpi=uai;

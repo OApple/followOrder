@@ -42,25 +42,25 @@ INCLUDEPATH += $$PWD/../include
 
 #LIBS += -L$$PWD/../glog_0_3_3/ -lglog
 #INCLUDEPATH += $$PWD/../glog_0_3_3
-LIBS += -lglog
-INCLUDEPATH += $$PWD/../SQLiteCpp/include
+LIBS += -lglog -lhiredis
+#INCLUDEPATH += $$PWD/../SQLiteCpp/include
 
 
-LIBS += -L$$PWD/../boost_1_61_0/stage/lib/ -lboost_system -lboost_date_time -lboost_system -lboost_thread -lpthread -lboost_chrono  -lboost_locale
+LIBS += -L$$PWD/../boost_1_61_0/stage/lib/ -lboost_system -lboost_date_time  -lboost_thread -lpthread -lboost_chrono  -lboost_locale
 
 INCLUDEPATH += $$PWD/../boost_1_61_0/
 
 
-LIBS +=  -licui18n -licuuc -licudata  -ldl -lhiredis -L$$PWD/../lib/   -lSQLiteCpp -L/usr/local/lib -lsqlite3
+#LIBS +=
 
 OTHER_FILES += \
     ../build-FlowOrder-gcc5_4_0-Debug/config/global.properties
 
 
-unix:!macx: LIBS += -L/usr/lib64/mysql/ -lmysqlclient
+#unix:!macx: LIBS +=
 
-unix:!macx: LIBS += -L/usr/local/lib -lmysqlpp
+unix:!macx: LIBS += -L/usr/local/lib -lmysqlpp  -L/usr/lib64/mysql/ -lmysqlclient
 
 INCLUDEPATH += /usr/local/include/mysql++ /usr/include/mysql
 
-DEPENDPATH += /usr/local/include/mysql++
+#DEPENDPATH += /usr/local/include/mysql++

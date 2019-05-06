@@ -26,7 +26,7 @@ void UpdateThread::run()
         if(ct.haveOrder())
         {
             LOG(ERROR)<<"maps have order refuse update";
-            return ;
+            continue ;
         }
         if(slaveMasters==dii.slaveMasters)
         {

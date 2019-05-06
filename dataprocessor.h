@@ -77,7 +77,7 @@ public:
     NiuTraderSpi *getMaster(const string &master);
     set<string>  getMaster();
     unordered_map<string, NiuTraderSpi*> masterAccountMap;
-
+ unordered_map<string, InstrumentInfo*> instruments;
 
     //property config
     int MuseReal=0;//test environment
@@ -95,6 +95,7 @@ public:
     int     db_maxConnSize=10;
     string db_charset="utf8";
     int     db_port=3306;
+    bool debug=false;
 
     string redis_host="127.0.0.1";
     string redis_pwd;

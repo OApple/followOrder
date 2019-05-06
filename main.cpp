@@ -1,6 +1,6 @@
 #include <iostream>
 #include <memory>
-#include <dlfcn.h>
+//#include <dlfcn.h>
 #include <glog/logging.h>
 
 using namespace std;
@@ -11,6 +11,7 @@ using namespace std;
 #include "property.h"
 #include "chkthread.h"
 #include "updatethread.h"
+#include "updateacc.h"
 
 
 int main(int argc, char**argv)
@@ -32,6 +33,8 @@ int main(int argc, char**argv)
     ct.start();
     UpdateThread&ut=UpdateThread::GetInstance();
     ut.start();
+    UpdateAcc &ua=UpdateAcc::GetInstance();
+    ua.start();
     dii.startTradeApi();
 
     while(1){

@@ -70,7 +70,6 @@ public:
     TThostFtdcPriceType	UpperLimitPrice =0;
     ///跌停板价
     TThostFtdcPriceType	LowerLimitPrice = 0;
-    bool isPriceInit = false;
 };
 
 /*报单信息*/

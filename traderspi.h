@@ -1,8 +1,8 @@
 #pragma once
 #include <list>
 #include <string>
-#include <SQLiteCpp/SQLiteCpp.h>
-#include <SQLiteCpp/VariadicBind.h>
+//#include <SQLiteCpp/SQLiteCpp.h>
+//#include <SQLiteCpp/VariadicBind.h>
 #include <ThostFtdcTraderApi.h>
 
 #include "property.h"
@@ -163,7 +163,7 @@ private:
     DataInitInstance &dii;
 
     bool _positon_req_send=false;
-    SQLite::Database *sqlite_handle;
+//    SQLite::Database *sqlite_handle;
     string  _investorID="";
     string _password="";
     string _trade_front_addr="0";

@@ -164,7 +164,7 @@ void CMdSpi::UnSubscribe(const string &instrument)
 
 void CMdSpi::OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpecificInstrument, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    string str=strRspInfoField(pRspInfo);
+//    string str=strRspInfoField(pRspInfo);
 //    cout<<str<<endl;
 //    LOG(ERROR)<<"OnRspSubMarketData"<<str;
 
@@ -172,7 +172,7 @@ void CMdSpi::OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpecificInst
 
 void CMdSpi::OnRspUnSubMarketData(CThostFtdcSpecificInstrumentField *pSpecificInstrument, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    LOG(ERROR) << __FUNCTION__ << strRspInfoField(pRspInfo)<< endl;
+//    LOG(ERROR) << strRspInfoField(pRspInfo)<< endl;
 }
 
 
@@ -183,11 +183,7 @@ void CMdSpi::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketDa
 //   LOG(ERROR)<<datastr;
     unsigned char buf[20]={'\0'};
     memset(buf,0,20);
-//    if (abs(pDepthMarketData->AskPrice1) > 10000000000 || abs(pDepthMarketData->LastPrice) > 10000000000 )
-//    {
-//        LOG(ERROR) << (boost::lexical_cast<string>(pDepthMarketData->InstrumentID) + "初始化行情出现问题;");
-//        return;
-//    }
+
     if (pDepthMarketData->InstrumentID == NULL||pDepthMarketData->BidPrice1 == NULL)
     {
         LOG(ERROR) << (boost::lexical_cast<string>(pDepthMarketData->InstrumentID) +"行情数据为空！！！！！");
@@ -195,13 +191,21 @@ void CMdSpi::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketDa
     }
 
 
-    dii.saveDepthMarketDataToDb(pDepthMarketData);
-
-//    Instrument*pins=instrument_map[pDepthMarketData->InstrumentID];
-//    if(!pins)
-//    {
-//        return;
-//    }
+//    dii.saveDepthMarketDataToDb(pDepthMarketData);
+//should lock !!!!
+    InstrumentInfo*pins=dii.instruments[pDepthMarketData->InstrumentID];
+    if(!pins)
+    {
+      LOG(ERROR)<<"can not find instrument "<<pDepthMarketData->InstrumentID;
+        return;
+    }
+    else
+    {
+        pins->UpperLimitPrice=pDepthMarketData->UpperLimitPrice;
+        pins->LowerLimitPrice=pDepthMarketData->LowerLimitPrice;
+//        cout<<pins->instrumentID<<pins->UpperLimitPrice<<" : "<<pins->LowerLimitPrice<<endl;
+          UnSubscribe(pins->instrumentID);
+    }
 
 }
 

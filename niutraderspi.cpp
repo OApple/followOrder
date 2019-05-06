@@ -8,8 +8,8 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
 #include <sqlite3.h>
-#include <SQLiteCpp/SQLiteCpp.h>
-#include <SQLiteCpp/VariadicBind.h>
+//#include <SQLiteCpp/SQLiteCpp.h>
+//#include <SQLiteCpp/VariadicBind.h>
 using namespace std;
 using boost::locale::conv::between;
 using boost::lexical_cast;
@@ -47,7 +47,7 @@ NiuTraderSpi::NiuTraderSpi(DataInitInstance&di, string&config):dii(di)
 //    _brokerID=dii.broker_id;
         _trade_front_addr= "tcp://"+config_list[2];
         _brokerID=config_list[3];
-        cout<<_trade_front_addr<<endl;
+//        cout<<_trade_front_addr<<endl;
 //    if(dii.MuseReal==1)
 //    {
 //        _trade_front_addr=dii.realTradeFrontAddr;
@@ -235,6 +235,7 @@ void NiuTraderSpi::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,CTh
 
         boost::this_thread::sleep(boost::posix_time::seconds(1));
         ReqQrySettlementInfo();
+
         //        ReqQrySettlementInfoConfirm(broker_ID,investorID);
     }
     else
@@ -319,8 +320,33 @@ void NiuTraderSpi::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmFie
     {
         LOG(WARNING) << "----->>> OnRspSettlementInfoConfirm: investorID=" <<pSettlementInfoConfirm->InvestorID<< endl;
         //        _loginOK=true;
+        if(_qryinstrument)
+        {
+//            while(_loginOK==false)
+//                this_thread::yield();
+            ReqQryInstrument();
+        }
+
+    }
+}
+
+void NiuTraderSpi::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    CMdSpi*mdspi=CMdSpi::getInstance();
+    if (pInstrument) {
+//        LOG(ERROR)<<pInstrument->InstrumentID;
+        InstrumentInfo* info = new InstrumentInfo();
+        info->instrumentID = pInstrument->InstrumentID;
+        dii.instruments[ info->instrumentID ] = info;
+        mdspi->Subscribe(info->instrumentID);
+    }
+    if (bIsLast && !IsErrorRspInfo(pRspInfo))
+    {
+        string msg="OnRspQryInstrument is done.";
+        LOG(INFO)<<msg;
         ReqQryTradingAccount();
     }
+
 }
 void NiuTraderSpi::ReqQryTradingAccount(){
     //boost::recursive_mutex::scoped_lock SLock(dii.initapi_mtx);
@@ -394,6 +420,22 @@ void NiuTraderSpi::ReqQryInvestorPosition()
     }
 }
 
+void NiuTraderSpi::ReqQryInstrument()
+{
+    CThostFtdcQryInstrumentField req;
+    memset(&req, 0, sizeof(req));
+    while(true)
+    {
+        int iResult = _pUserApi->ReqQryInstrument(&req, ++_requestID);
+        LOG(WARNING) << "<<<----- ReqQryInstrument: " <<"BrokerID="<<_brokerID<<";investorID="<<_investorID<< ((iResult == 0) ? " success" : "failed") <<iResult<< endl;
+
+        if(iResult)
+            boost::this_thread::sleep(boost::posix_time::seconds(1));
+        else
+            return;
+    }
+}
+
 
 
 
@@ -404,71 +446,19 @@ void NiuTraderSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pIn
 
     if (!IsErrorRspInfo(pRspInfo) && pInvestorPosition)
     {
-
-        hp=initpst(pInvestorPosition);
-        CMdSpi*mdspi=CMdSpi::getInstance();
-        if((hp->longTotalPosition!=0)||(hp->shortTotalPosition!=0))
-           mdspi->Subscribe(string(pInvestorPosition->InstrumentID));
         string info=strInvestorPositionField(pInvestorPosition);
         LOG(WARNING) << "------->>>>OnRspQryInvestorPosition" <<info<<endl;
         dii.saveThostFtdcInvestorPositionFieldToDb(pInvestorPosition);
-        int tmpArbVolume = 0;
-        HoldPositionInfo* tmppst = hp;
-        char char_tmp_pst[10] = { '\0' };
-        char char_longyd_pst[10] = { '\0' };
-        char char_longtd_pst[10] = { '\0' };
-        sprintf(char_tmp_pst, "%d", tmppst->longTotalPosition);
-        sprintf(char_longyd_pst, "%d", tmppst->longYdPosition);
-        sprintf(char_longtd_pst, "%d", tmppst->longTdPosition);
+        CMdSpi*mdspi=CMdSpi::getInstance();
 
-        char char_tmp_pst2[10] = { '\0' };
-        char char_shortyd_pst[10] = { '\0' };
-        char char_shorttd_pst[10] = { '\0' };
-        sprintf(char_tmp_pst2, "%d", tmppst->shortTotalPosition);
-        sprintf(char_shortyd_pst, "%d", tmppst->shortYdPosition);
-        sprintf(char_shorttd_pst, "%d", tmppst->shortTdPosition);
-        int currHoldPst = 0;
-        int pdHoldPst = 0;
-        if (tmppst->longTotalPosition == 0) {
-            currHoldPst = tmppst->shortTotalPosition;
-        } else if (tmppst->shortTotalPosition == 0) {
-            currHoldPst = tmppst->longTotalPosition;
-        }else if (tmppst->longTotalPosition >= tmppst->shortTotalPosition) {
-            currHoldPst = tmppst->shortTotalPosition;
-        } else {
-            currHoldPst = tmppst->longTotalPosition;
-        }
-
-        if (currHoldPst == 0) {
-            tmpArbVolume = 0;
-        } else if (pdHoldPst == 0) {
-            tmpArbVolume = 0;
-        } else if (currHoldPst >= pdHoldPst) {
-            tmpArbVolume = pdHoldPst;
-        } else {
-            tmpArbVolume = currHoldPst;
-        }
-        string pst_msg =
-                "持仓结构:" +string(pInvestorPosition->InstrumentID) +
-                ",多头持仓量=" + string(char_tmp_pst) +
-                ",今仓数量=" + string(char_longtd_pst) +
-                ",昨仓数量=" + string(char_longyd_pst) +
-                ",可平量=" + boost::lexical_cast<string>(tmppst->longAvaClosePosition) +
-                ",持仓均价=" + boost::lexical_cast<string>(tmppst->longHoldAvgPrice) +
-                ";空头持仓量=" + string(char_tmp_pst2) +
-                ",今仓数量=" + string(char_shorttd_pst) +
-                ",昨仓数量=" + string(char_shortyd_pst) +
-                ",可平量=" + boost::lexical_cast<string>(tmppst->shortAvaClosePosition) +
-                ",持仓均价=" + boost::lexical_cast<string>(tmppst->shortHoldAvgPrice) +
-                ";组合持仓量=" + boost::lexical_cast<string>(tmpArbVolume);
-        LOG(WARNING) << pst_msg << endl;
-        delete hp;
+//        if(pInvestorPosition->Position)
+//           mdspi->Subscribe(string(pInvestorPosition->InstrumentID));
     }
     if(bIsLast)
     {
         _loginOK=true;
         _positon_req_send=false;
-        ReqQryOrder();
+//        ReqQryOrder();
     }
 }
 
@@ -481,7 +471,9 @@ void NiuTraderSpi::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfo
     {
         LOG(WARNING) << "--->>>OnRspQryOrder  InvestorID="<<pOrder->InvestorID<<"status=" <<pOrder->OrderStatus<< endl;
         string tmpstr = strOrderField(pOrder);
-        LOG(WARNING) << (lexical_cast<string>(this)+"----->>>OnRspQryOrder:" + tmpstr);
+        string status=lexical_cast<string>(pOrder->OrderStatus);
+        if(status=="3")
+            LOG(WARNING) << (lexical_cast<string>(this)+"----->>>OnRspQryOrder:" + tmpstr);
     }
 
 //  typedef  unordered_map<string, CTraderSpi*>::value_type  const_pair;
@@ -729,6 +721,7 @@ void NiuTraderSpi::OnRtnTrade(CThostFtdcTradeField *pTrade)
             double totalVolume=(pTrade->Volume*n1/n2);
             if(totalVolume<1)
                 totalVolume=1;
+             LOG(ERROR) <<"totalVolume111="<<totalVolume<<endl;
             if(pTrade->OffsetFlag !='0')
             {
                 unordered_map<string, HoldPositionInfo*>&pmap=(node.second)->positionmap;
@@ -762,7 +755,7 @@ void NiuTraderSpi::OnRtnTrade(CThostFtdcTradeField *pTrade)
                 }
             }
             newuof->_volume=totalVolume;
-            cout<<"totalVolume="<<totalVolume<<endl;
+             LOG(ERROR) <<"totalVolume="<<totalVolume<<endl;
             newuof->_key2=lexical_cast<string>(newuof->_investorID)+lexical_cast<string>(newuof->_order_ref);
             uof->_volume=uof->_volume-pTrade->Volume;
             if( uof->_volume==0)
@@ -781,7 +774,7 @@ void NiuTraderSpi::OnRtnTrade(CThostFtdcTradeField *pTrade)
             }
             else
             {
-//                newuof->SetStatus('r');
+                newuof->SetStatus('r');
                  newuof->begin_time=time(NULL);
                   ct.putFOrder(newuof);
                 LOG(WARNING)<<"ReqOrderInsert investorid="<< newuof->_investorID;
@@ -937,7 +930,15 @@ void NiuTraderSpi::setFollows(const unordered_map<string, CTraderSpi *> &follows
     _slaves = follows;
     mtx.unlock();
 }
+bool NiuTraderSpi::qryinstrument() const
+{
+    return _qryinstrument;
+}
 
+void NiuTraderSpi::setQryinstrument(bool qryinstrument)
+{
+    _qryinstrument = qryinstrument;
+}
 
 
 
@@ -959,8 +960,9 @@ void  NiuTraderSpi::startApi()
     {
         (node.second)->startApi();
     }
-mtx.unlock();
+    mtx.unlock();
     _pUserApi->Init();
+
 }
 
 void NiuTraderSpi::SaveTransactionRecord()

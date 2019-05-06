@@ -209,15 +209,15 @@ string strInvestorPositionField(CThostFtdcInvestorPositionField *pPosition)
         return ( tmp);
     string invesinfo=
             "经纪公司代码 BrokerID="+lexical_cast<string>(pPosition->BrokerID)+
-            "  合约代码 InstrumentID="+pPosition->InstrumentID+
-            "  投资者代码 InvestorID="+pPosition->InvestorID+
-            "  持仓多空方向 PosiDirection="+pPosition->PosiDirection+
-            "  投机套保标志 HedgeFlag="+pPosition->HedgeFlag+
-            "  持仓日期 PositionDate="+pPosition->PositionDate+
-            "  上日持仓 YdPosition="+lexical_cast<string>(pPosition->YdPosition)+
-            "  今日持仓 Position="+lexical_cast<string>(pPosition->Position)+
-            "  多头冻结 LongFrozen="+lexical_cast<string>(pPosition->LongFrozen)+
-            "  空头冻结 ShortFrozen="+lexical_cast<string>(pPosition->ShortFrozen)+
+            "  ###合约代码 InstrumentID="+pPosition->InstrumentID+
+            "  ###投资者代码 InvestorID="+pPosition->InvestorID+
+            "  ###持仓多空方向 PosiDirection="+pPosition->PosiDirection+
+            "  ###投机套保标志 HedgeFlag="+pPosition->HedgeFlag+
+            "  ###持仓日期 PositionDate="+pPosition->PositionDate+
+            "  ###上日持仓 YdPosition="+lexical_cast<string>(pPosition->YdPosition)+
+            "  ###今日持仓 Position="+lexical_cast<string>(pPosition->Position)+
+            "  ###多头冻结 LongFrozen="+lexical_cast<string>(pPosition->LongFrozen)+
+            "  ###空头冻结 ShortFrozen="+lexical_cast<string>(pPosition->ShortFrozen)+
             "  开仓冻结金额 LongFrozenAmount="+lexical_cast<string>(pPosition->LongFrozenAmount)+
 
             "  开仓冻结金额 ShortFrozenAmount="+lexical_cast<string>(pPosition->ShortFrozenAmount)+
@@ -247,7 +247,7 @@ string strInvestorPositionField(CThostFtdcInvestorPositionField *pPosition)
             "  组合空头冻结 CombShortFrozen="+lexical_cast<string>(pPosition->CombShortFrozen)+
             "  逐日盯市平仓盈亏 CloseProfitByDate="+lexical_cast<string>(pPosition->CloseProfitByDate)+
             "  逐笔对冲平仓盈亏 CloseProfitByTrade="+lexical_cast<string>(pPosition->CloseProfitByTrade)+
-            "  今日持仓 TodayPosition="+lexical_cast<string>(pPosition->TodayPosition)+
+            "  ###今日持仓 TodayPosition="+lexical_cast<string>(pPosition->TodayPosition)+
             "  保证金率 MarginRateByMoney="+lexical_cast<string>(pPosition->MarginRateByMoney)+
             "  保证金率(按手数) MarginRateByVolume="+lexical_cast<string>(pPosition->MarginRateByVolume)+
             "  执行冻结 StrikeFrozen="+lexical_cast<string>(pPosition->StrikeFrozen)+

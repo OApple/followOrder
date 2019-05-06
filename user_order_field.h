@@ -6,7 +6,7 @@
 #include <thread>
 #include<iostream>
 #include <chrono>
-#include <iconv.h>
+//#include <iconv.h>
 #include <mutex>
 #ifdef _WIN32
 #include <windows.h>
@@ -85,7 +85,7 @@ public:
 
     string brokerID="";
     //    int followCount=0;// follow order times
-    string orderPriceType="2";
+    char orderPriceType='2';
     CThostFtdcTraderSpi* _pTraderSpi;
     CThostFtdcTraderApi* _pUserApi;
     string orderSysID;

@@ -128,6 +128,9 @@ void DataInitInstance::GetConfigFromFile(){
             else if("redis_key"==name_value[0]){
                 redis_key=name_value[1];
             }
+            else if("debug"==name_value[0]){
+                debug=boost::lexical_cast<int>(name_value[1]);
+            }
         }
     }
 }
@@ -143,7 +146,7 @@ void sig_act(int)
 {
     server_on_exit();
      raise(SIGKILL);
-//    exit(-1);
+//    exit(-1);//may be coredump
 }
 void DataInitInstance:: GetConfigFromRedis()
 {
@@ -194,8 +197,13 @@ void DataInitInstance:: GetConfigFromRedis()
 
 
         NiuTraderSpi* ba=new NiuTraderSpi(*this,slaveMaster[1]);
+        if(i==0)
+        {
+           ba->setQryinstrument(true);
+        }
         ba->setSlave(mSlave);
         masterAccountMap[ba->getInvestorID()] = ba;
+
         //    CTraderSpi*tmacc;
 
         typedef  unordered_map<string, CTraderSpi*>::value_type  const_pair;
@@ -1063,19 +1071,7 @@ void DataInitInstance::startTradeApi()
     for( unordered_map<string, NiuTraderSpi*>::iterator iter=masterAccountMap.begin();iter!=masterAccountMap.end();iter++ )
     {
         NiuTraderSpi* ba=iter->second;
-//        typedef  CTraderSpi*CTS;
-//        typedef  unordered_map<string, CTraderSpi*>::value_type  cconst_pair;
-//        BOOST_FOREACH(cconst_pair&node,ba->getSlave())
-//        {
-//            (node.second)->startApi();
-//        }
         ba->startApi();
-//        CTPInterface *interface=new CTPInterface();
-//        interface->pUserApi=ba->_pUserApi;
-//        interface->pUserSpi=ba;
-//        interface->investorID=ba->getInvestorID();
-//        interface->loginOK=false;
-//        tradeApiMap[ba->getInvestorID()]=interface;
     }
 }
 

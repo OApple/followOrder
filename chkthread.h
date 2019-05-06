@@ -9,7 +9,7 @@
 #include <iconv.h>
 #include <mutex>
 #include <time.h>
-#include <pthread.h>
+//#include <pthread.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <boost/bind.hpp>

@@ -31,6 +31,7 @@ void ChkThread::run()
                     if((tmt-uof->begin_time)<3)
                         continue;
                     uof->ReqOrderAction();
+                      LOG(INFO)<<"###ReqOrderAction investorid="<<uof->_investorID<<endl;
 //                    ForderMap.erase(uof->GetKey2());
                     //todo reqinsertorder
 
